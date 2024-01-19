@@ -1,0 +1,4 @@
+[submodule "server_config"]
+	path = server_config
+	url = https://github.com/ChwipoClova/server_config.git
+	branch = main
