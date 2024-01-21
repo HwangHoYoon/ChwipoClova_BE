@@ -1,20 +1,17 @@
 package com.chwipoClova.user.service;
 
-import com.chwipoClova.common.dto.Token;
-import com.chwipoClova.common.dto.TokenDto;
-import com.chwipoClova.common.dto.TokenEditor;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
-import com.chwipoClova.common.repository.TokenRepository;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
 import com.chwipoClova.common.utils.JwtUtil;
-import com.chwipoClova.interview.entity.InterviewEditor;
+import com.chwipoClova.token.dto.TokenDto;
+import com.chwipoClova.token.entity.Token;
+import com.chwipoClova.token.service.TokenService;
 import com.chwipoClova.user.dto.KakaoToken;
 import com.chwipoClova.user.dto.KakaoUserInfo;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
-import com.chwipoClova.user.request.UserLoginReq;
 import com.chwipoClova.user.request.UserLogoutReq;
 import com.chwipoClova.user.response.UserInfoRes;
 import com.chwipoClova.user.response.UserLoginRes;
@@ -44,7 +41,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    private final TokenRepository tokenRepository;
+    private final TokenService tokenService;
 
     private final RestTemplate restTemplate;
 
@@ -104,21 +101,20 @@ public class UserService {
 
             Long userId = userInfoRst.getUserId();
 
-            TokenDto tokenDto = jwtUtil.createAllToken(String.valueOf(userId));
+            String strUserId = String.valueOf(userId);
+
+            TokenDto tokenDto = jwtUtil.createAllToken(strUserId);
 
             // Refresh 토큰 있는지 확인
-            Optional<Token> refreshToken = tokenRepository.findByUserUserId(userInfoRst.getUserId());
+            Token refreshToken = tokenService.findById(strUserId);
 
             // 있다면 새토큰 발급후 업데이트
             // 없다면 새로 만들고 디비 저장
-            if(refreshToken.isPresent()) {
-                Token token = refreshToken.get();
-                TokenEditor.TokenEditorBuilder editorBuilder = token.toEditor();
-                TokenEditor interviewEditor = editorBuilder.refreshToken(tokenDto.getRefreshToken()).build();
-                token.edit(interviewEditor);
+            if(refreshToken != null) {
+                tokenService.save(refreshToken);
             }else {
-                Token newToken = new Token(tokenDto.getRefreshToken(),  User.builder().userId(userInfoRst.getUserId()).build());
-                tokenRepository.save(newToken);
+                Token newToken = new Token(tokenDto.getRefreshToken(),  strUserId);
+                tokenService.save(newToken);
             }
 
             // response 헤더에 Access Token / Refresh Token 넣음
@@ -215,7 +211,8 @@ public class UserService {
 
     public CommonResponse logout(HttpServletResponse response, UserLogoutReq userLogoutReq) {
         Long userId = userLogoutReq.getUserId();
-        tokenRepository.deleteById(userId);
+        String strUserId = String.valueOf(userId);
+        tokenService.deleteById(strUserId);
         jwtUtil.setHeaderAccessToken(response, "");
         jwtUtil.setDelCookieRefreshToken(response);
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
@@ -267,19 +264,19 @@ public class UserService {
             User userInfoRst = userInfo.get();
 
             Long userId = userInfoRst.getUserId();
-
-            TokenDto tokenDto = jwtUtil.createAllToken(String.valueOf(userId));
+            String strUserId = String.valueOf(userId);
+            TokenDto tokenDto = jwtUtil.createAllToken(strUserId);
 
             // Refresh토큰 있는지 확인
-            Optional<Token> refreshToken = tokenRepository.findByUserUserId(userInfoRst.getUserId());
+            Token refreshToken = tokenService.findById(strUserId);
 
             // 있다면 새토큰 발급후 업데이트
             // 없다면 새로 만들고 디비 저장
-            if(refreshToken.isPresent()) {
-                tokenRepository.save(refreshToken.get().updateToken(tokenDto.getRefreshToken()));
+            if(refreshToken != null) {
+                tokenService.save(refreshToken.updateToken(tokenDto.getRefreshToken()));
             }else {
-                Token newToken = new Token(tokenDto.getRefreshToken(),  User.builder().userId(userInfoRst.getUserId()).build());
-                tokenRepository.save(newToken);
+                Token newToken = new Token(tokenDto.getRefreshToken(), strUserId);
+                tokenService.save(newToken);
             }
 
             // response 헤더에 Access Token / Refresh Token 넣음

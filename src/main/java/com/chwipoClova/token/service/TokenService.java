@@ -1,0 +1,53 @@
+package com.chwipoClova.token.service;
+
+import com.chwipoClova.common.utils.JwtUtil;
+import com.chwipoClova.token.dto.TokenDto;
+import com.chwipoClova.token.entity.Token;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
+
+@RequiredArgsConstructor
+@Service
+@Slf4j
+public class TokenService {
+
+    private static final String HASH_KEY = "token";
+
+    private final RedisTemplate<String, Token> redisTemplate;
+
+    public void save(Token token) {
+        ValueOperations<String, Token> valueOperations = redisTemplate.opsForValue();
+        valueOperations.set(HASH_KEY + ":" + token.getUserId(), token);
+
+/*        HashOperations<String, String, Token> hashOps = redisTemplate.opsForHash();
+        hashOps.put(HASH_KEY, token.getUserId(), token);*/
+
+        redisTemplate.expire(HASH_KEY + ":" + token.getUserId(), JwtUtil.REFRESH_COOKIE_TIME, TimeUnit.SECONDS);
+    }
+
+    public Token findById(String userId) {
+        ValueOperations<String, Token> valueOperations = redisTemplate.opsForValue();
+        return valueOperations.get(HASH_KEY + ":" + userId);
+
+/*        HashOperations<String, String, Token> hashOps = redisTemplate.opsForHash();
+        return hashOps.get(HASH_KEY, userId);*/
+    }
+
+    public void update(Token token) {
+        save(token); // Hash에 이미 존재하면 덮어쓰기 역할을 합니다.
+    }
+
+    public void deleteById(String userId) {
+        redisTemplate.delete(HASH_KEY + ":" + userId);
+//        HashOperations<String, String, Token> hashOps = redisTemplate.opsForHash();
+//        hashOps.delete(HASH_KEY, userId);
+    }
+}

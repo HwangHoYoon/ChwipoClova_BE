@@ -1,6 +1,5 @@
 package com.chwipoClova.common.repository;
 
-import com.chwipoClova.common.dto.Token;
 import com.chwipoClova.common.entity.ApiLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.query.Procedure;

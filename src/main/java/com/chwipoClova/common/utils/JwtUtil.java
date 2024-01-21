@@ -1,9 +1,9 @@
 package com.chwipoClova.common.utils;
 
-import com.chwipoClova.common.dto.Token;
-import com.chwipoClova.common.dto.TokenDto;
-import com.chwipoClova.common.repository.TokenRepository;
 import com.chwipoClova.common.service.UserDetailsServiceImpl;
+import com.chwipoClova.token.dto.TokenDto;
+import com.chwipoClova.token.entity.Token;
+import com.chwipoClova.token.service.TokenService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -31,13 +31,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class JwtUtil {
 
     private final UserDetailsServiceImpl userDetailsService;
-    private final TokenRepository tokenRepository;
+    private final TokenService tokenService;
 
-    private static final long ACCESS_TIME =  2 * 24 * 60 * 60 * 1000L;
+    private static final long ACCESS_TIME =  30 * 60 * 1000L;
 
     private static final long REFRESH_TIME =  14 * 24 * 60 * 60 * 1000L;
 
-    private static final int REFRESH_COOKIE_TIME = 14 * 24 * 60 * 60;
+    public static final int REFRESH_COOKIE_TIME = 14 * 24 * 60 * 60;
 
     public static final String ACCESS_TOKEN = "accessToken";
 
@@ -118,11 +118,12 @@ public class JwtUtil {
         if(!tokenValidation(token)) return false;
 
         String idFromToken = getIdFromToken(token);
-        Long userId = Long.parseLong(idFromToken);
+        //Long userId = Long.parseLong(idFromToken);
         // DB에 저장한 토큰 비교
-        Optional<Token> refreshToken = tokenRepository.findByUserUserId(userId);
 
-        return refreshToken.isPresent() && token.equals(refreshToken.get().getRefreshToken());
+        Token refreshToken = tokenService.findById(idFromToken);
+
+        return refreshToken != null && token.equals(refreshToken.getRefreshToken());
     }
 
     // 인증 객체 생성
