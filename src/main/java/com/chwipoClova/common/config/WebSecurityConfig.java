@@ -1,6 +1,7 @@
 package com.chwipoClova.common.config;
 
 import com.chwipoClova.common.filter.JwtAuthFilter;
+import com.chwipoClova.common.repository.LogRepository;
 import com.chwipoClova.common.service.JwtAuthenticationEntryPoint;
 import com.chwipoClova.common.utils.JwtUtil;
 import jakarta.validation.constraints.NotNull;
@@ -34,6 +35,8 @@ public class WebSecurityConfig {
     @Value("${web.authorize.url}")
     private String[] authorizeUrl;
 
+    private final LogRepository logRepository;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -57,7 +60,7 @@ public class WebSecurityConfig {
                                 //.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 )
-                .addFilterBefore(new JwtAuthFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthFilter(jwtUtil, authorizeUrl, logRepository), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling((exception)-> exception.authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
         ;
         return http.build();

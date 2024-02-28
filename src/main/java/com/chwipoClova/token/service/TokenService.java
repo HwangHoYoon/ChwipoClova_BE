@@ -25,17 +25,17 @@ public class TokenService {
 
     public void save(Token token) {
         ValueOperations<String, Token> valueOperations = redisTemplate.opsForValue();
-        valueOperations.set(HASH_KEY + ":" + token.getUserId(), token);
+        valueOperations.set(HASH_KEY + ":" + token.getRefreshToken(), token);
 
 /*        HashOperations<String, String, Token> hashOps = redisTemplate.opsForHash();
         hashOps.put(HASH_KEY, token.getUserId(), token);*/
 
-        redisTemplate.expire(HASH_KEY + ":" + token.getUserId(), JwtUtil.REFRESH_COOKIE_TIME, TimeUnit.SECONDS);
+        redisTemplate.expire(HASH_KEY + ":" + token.getRefreshToken(), JwtUtil.REFRESH_COOKIE_TIME, TimeUnit.SECONDS);
     }
 
-    public Token findById(String userId) {
+    public Token findById(String token) {
         ValueOperations<String, Token> valueOperations = redisTemplate.opsForValue();
-        return valueOperations.get(HASH_KEY + ":" + userId);
+        return valueOperations.get(HASH_KEY + ":" + token);
 
 /*        HashOperations<String, String, Token> hashOps = redisTemplate.opsForHash();
         return hashOps.get(HASH_KEY, userId);*/
@@ -45,8 +45,8 @@ public class TokenService {
         save(token); // Hash에 이미 존재하면 덮어쓰기 역할을 합니다.
     }
 
-    public void deleteById(String userId) {
-        redisTemplate.delete(HASH_KEY + ":" + userId);
+    public void deleteById(String token) {
+        redisTemplate.delete(HASH_KEY + ":" + token);
 //        HashOperations<String, String, Token> hashOps = redisTemplate.opsForHash();
 //        hashOps.delete(HASH_KEY, userId);
     }

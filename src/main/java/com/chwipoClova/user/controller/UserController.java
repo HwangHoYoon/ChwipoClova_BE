@@ -19,12 +19,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 
 @Slf4j
 @RestController
@@ -108,8 +110,9 @@ public class UserController {
     }
     )
     public CommonResponse logout(@RequestBody UserLogoutReq userLogoutReq,
+                                 @Parameter(hidden = true) HttpServletRequest request,
                                  @Parameter(hidden = true) HttpServletResponse response
     ) {
-        return userService.logout(response, userLogoutReq);
+        return userService.logout(request, response, userLogoutReq);
     }
 }

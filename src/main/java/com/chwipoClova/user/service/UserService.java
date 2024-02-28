@@ -2,6 +2,7 @@ package com.chwipoClova.user.service;
 
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
+import com.chwipoClova.common.repository.LogRepository;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
 import com.chwipoClova.common.utils.JwtUtil;
@@ -16,6 +17,7 @@ import com.chwipoClova.user.request.UserLogoutReq;
 import com.chwipoClova.user.response.UserInfoRes;
 import com.chwipoClova.user.response.UserLoginRes;
 import com.chwipoClova.user.response.UserSnsUrlRes;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +42,6 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-
-    private final TokenService tokenService;
 
     private final RestTemplate restTemplate;
 
@@ -71,6 +71,7 @@ public class UserService {
     @Value("${kakao.redirect_local_uri}")
     private String redirectLocalUri;
 
+    private final LogRepository logRepository;
 
     public UserSnsUrlRes getKakaoUrl() {
         String kakaoUrl = kakaoAuthUrl + "?response_type=code" + "&client_id=" + clientId
@@ -103,22 +104,25 @@ public class UserService {
 
             String strUserId = String.valueOf(userId);
 
+            // 로그인 할때마다 토큰 새로 발급(갱신)
             TokenDto tokenDto = jwtUtil.createAllToken(strUserId);
+//            Token newToken = new Token(tokenDto.getRefreshToken(),  strUserId);
+//            tokenService.save(newToken);
 
             // Refresh 토큰 있는지 확인
-            Token refreshToken = tokenService.findById(strUserId);
+           // Token refreshToken = tokenService.findById(strUserId);
 
             // 있다면 새토큰 발급후 업데이트
             // 없다면 새로 만들고 디비 저장
-            if(refreshToken != null) {
-                tokenService.save(refreshToken);
-            }else {
-                Token newToken = new Token(tokenDto.getRefreshToken(),  strUserId);
-                tokenService.save(newToken);
-            }
+//            if(refreshToken != null) {
+//                tokenService.save(refreshToken);
+//            }else {
+//                Token newToken = new Token(tokenDto.getRefreshToken(),  strUserId);
+//                tokenService.save(newToken);
+//            }
 
             // response 헤더에 Access Token / Refresh Token 넣음
-            jwtUtil.setResonseJwtToken(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+            jwtUtil.setResonseJwtToken(response, tokenDto);
 
             UserLoginRes userLoginRes = UserLoginRes.builder()
                     .snsId(userInfoRst.getSnsId())
@@ -131,10 +135,11 @@ public class UserService {
                     .regDate(userInfoRst.getRegDate())
                     .modifyDate(userInfoRst.getModifyDate())
                     .build();
-
+            log.info("기존유저 {}, {}",userLoginRes.getUserId(), userLoginRes.getName());
+            // API 로그 적재
+            logRepository.loginLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
             return new CommonResponse<>(String.valueOf(HttpStatus.OK.value()), userLoginRes, HttpStatus.OK.getReasonPhrase());
         } else {
-            log.info("신규유저 등록 {}", nickname);
             User user = User.builder()
                     .snsId(snsId)
                     .email(email)
@@ -144,7 +149,10 @@ public class UserService {
                     .profileImage(profileImageUrl)
                     .regDate(new Date())
                     .build();
-            userRepository.save(user);
+            User userResult = userRepository.save(user);
+            log.info("신규유저 {}, {}",userResult.getUserId(), userResult.getName());
+            // API 로그 적재
+            logRepository.loginLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
             return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
         }
 
@@ -209,12 +217,17 @@ public class UserService {
                 .build();
     }
 
-    public CommonResponse logout(HttpServletResponse response, UserLogoutReq userLogoutReq) {
-        Long userId = userLogoutReq.getUserId();
-        String strUserId = String.valueOf(userId);
-        tokenService.deleteById(strUserId);
-        jwtUtil.setHeaderAccessToken(response, "");
-        jwtUtil.setDelCookieRefreshToken(response);
+    public CommonResponse logout(HttpServletRequest request, HttpServletResponse response, UserLogoutReq userLogoutReq) {
+//        Long userId = userLogoutReq.getUserId();
+//        String strUserId = String.valueOf(userId);
+//        tokenService.deleteById(strUserId);
+
+        // 로그아웃은 무조건 성공
+        try {
+            jwtUtil.deleteAllToken(request, response);
+        } catch (Exception e) {
+            log.error("로그아웃 에러 발생 {}", e.getMessage());
+        }
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
@@ -268,19 +281,19 @@ public class UserService {
             TokenDto tokenDto = jwtUtil.createAllToken(strUserId);
 
             // Refresh토큰 있는지 확인
-            Token refreshToken = tokenService.findById(strUserId);
+//            Token refreshToken = tokenService.findById(strUserId);
 
             // 있다면 새토큰 발급후 업데이트
             // 없다면 새로 만들고 디비 저장
-            if(refreshToken != null) {
-                tokenService.save(refreshToken.updateToken(tokenDto.getRefreshToken()));
-            }else {
-                Token newToken = new Token(tokenDto.getRefreshToken(), strUserId);
-                tokenService.save(newToken);
-            }
+//            if(refreshToken != null) {
+//                tokenService.save(refreshToken.updateToken(tokenDto.getRefreshToken()));
+//            }else {
+//                Token newToken = new Token(tokenDto.getRefreshToken(), strUserId);
+//                tokenService.save(newToken);
+//            }
 
             // response 헤더에 Access Token / Refresh Token 넣음
-            jwtUtil.setResonseJwtToken(response, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
+            jwtUtil.setResonseJwtToken(response, tokenDto);
 
             UserLoginRes userLoginRes = UserLoginRes.builder()
                     .snsId(userInfoRst.getSnsId())
@@ -293,10 +306,10 @@ public class UserService {
                     .regDate(userInfoRst.getRegDate())
                     .modifyDate(userInfoRst.getModifyDate())
                     .build();
-
+            log.info("기존유저 {}, {}",userLoginRes.getUserId(), userLoginRes.getName());
+            logRepository.loginLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
             return new CommonResponse<>(String.valueOf(HttpStatus.OK.value()), userLoginRes, HttpStatus.OK.getReasonPhrase());
         } else {
-            log.info("신규유저 등록 {}", nickname);
             User user = User.builder()
                     .snsId(snsId)
                     .email(email)
@@ -306,7 +319,9 @@ public class UserService {
                     .profileImage(profileImageUrl)
                     .regDate(new Date())
                     .build();
-            userRepository.save(user);
+            User userResult = userRepository.save(user);
+            log.info("신규유저 {}, {}",userResult.getUserId(), userResult.getName());
+            logRepository.loginLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
             return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
         }
     }

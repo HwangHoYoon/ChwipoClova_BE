@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -33,9 +34,11 @@ public class JwtUtil {
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenService tokenService;
 
-    private static final long ACCESS_TIME =  30 * 60 * 1000L;
+    private static final long ACCESS_TIME = 2 * 60 * 60 * 1000L;
 
-    private static final long REFRESH_TIME =  14 * 24 * 60 * 60 * 1000L;
+    private static final long REFRESH_TIME = 14 * 24 * 60 * 60 * 1000L;
+
+    private static final int ACCESS_COOKIE_TIME = 2 * 60 * 60;
 
     public static final int REFRESH_COOKIE_TIME = 14 * 24 * 60 * 60;
 
@@ -44,6 +47,10 @@ public class JwtUtil {
     public static final String REFRESH_TOKEN = "refreshToken";
 
     public static final String AUTHORIZATION = "Authorization";
+
+    public static final String ACCESS = "Access";
+
+    public static final String REFRESH = "Refresh";
 
     public static final String BEARER = "Bearer ";
 
@@ -67,7 +74,7 @@ public class JwtUtil {
     // header 토큰을 가져오는 기능
     public String getHeaderToken(HttpServletRequest request, String type) {
 
-        String tokenName = type.equals("Access") ? ACCESS_TOKEN : REFRESH_TOKEN;
+        //String tokenName = type.equals("Access") ? ACCESS_TOKEN : REFRESH_TOKEN;
         String authorization = request.getHeader(AUTHORIZATION);
 
         if (authorization != null && authorization.startsWith(BEARER)) {
@@ -79,17 +86,18 @@ public class JwtUtil {
 
     // 토큰 생성
     public TokenDto createAllToken(String userId) {
-        return new TokenDto(createToken(userId, "Access"), createToken(userId, "Refresh"));
+        return new TokenDto(createToken(userId, ACCESS), createToken(userId, REFRESH), userId);
     }
 
     public String createToken(String id, String type) {
 
         Date date = new Date();
 
-        long time = type.equals("Access") ? ACCESS_TIME : REFRESH_TIME;
+        long time = type.equals(ACCESS) ? ACCESS_TIME : REFRESH_TIME;
+        String loginId = type.equals(ACCESS) ? id : "";
 
         return Jwts.builder()
-                .setSubject(id)
+                .setSubject(loginId)
                 .setExpiration(new Date(date.getTime() + time))
                 .setIssuedAt(date)
                 .signWith(key, signatureAlgorithm)
@@ -112,18 +120,19 @@ public class JwtUtil {
     // db에 저장되어 있는 token과 비교
     // db에 저장한다는 것이 jwt token을 사용한다는 강점을 상쇄시킨다.
     // db 보다는 redis를 사용하는 것이 더욱 좋다. (in-memory db기 때문에 조회속도가 빠르고 주기적으로 삭제하는 기능이 기본적으로 존재합니다.)
-    public Boolean refreshTokenValidation(String token) {
+    public Token selectRefreshToken(String token) {
 
         // 1차 토큰 검증
-        if(!tokenValidation(token)) return false;
+        if(!tokenValidation(token)) return null;
 
-        String idFromToken = getIdFromToken(token);
+        //String idFromToken = getIdFromToken(token);
         //Long userId = Long.parseLong(idFromToken);
         // DB에 저장한 토큰 비교
 
-        Token refreshToken = tokenService.findById(idFromToken);
+        Token refreshToken = tokenService.findById(token);
 
-        return refreshToken != null && token.equals(refreshToken.getRefreshToken());
+        // return refreshToken != null && token.equals(refreshToken.getRefreshToken());
+        return refreshToken;
     }
 
     // 인증 객체 생성
@@ -148,27 +157,25 @@ public class JwtUtil {
         response.setHeader(REFRESH_TOKEN, refreshToken);
     }
 
-    public void setCookieRefreshToken(HttpServletResponse response, String refreshToken) {
-        ResponseCookie responseCookie = ResponseCookie.from(REFRESH_TOKEN, refreshToken)
-                .maxAge(REFRESH_COOKIE_TIME)
+    public void setCookieToken(HttpServletResponse response, String token, String type) {
+        String cookieName = getCookieName(type);
+        int cookieTime = getCookieTime(type);
+
+        ResponseCookie responseCookie = ResponseCookie.from(cookieName, token)
+                .maxAge(cookieTime)
                 .path("/")
                 .secure(true)
-                //.domain(domain)
+                .domain(domain)
                 .sameSite("None")
                 .httpOnly(true)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-        /*response.setHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-        Cookie cookie = new Cookie(REFRESH_TOKEN, refreshToken);
-        cookie.setMaxAge(REFRESH_COOKIE_TIME);
-        cookie.setHttpOnly(true);
-        //cookie.setSecure(true);
-        cookie.setPath("/");
-        response.addCookie(cookie);*/
     }
 
-    public void setDelCookieRefreshToken(HttpServletResponse response) {
-        ResponseCookie responseCookie = ResponseCookie.from(REFRESH_TOKEN, null)
+    public void setDelCookieToken(HttpServletResponse response, String type) {
+        String cookieName = getCookieName(type);
+
+        ResponseCookie responseCookie = ResponseCookie.from(cookieName, null)
                 .maxAge(0)
                 .path("/")
                 .secure(true)
@@ -176,21 +183,12 @@ public class JwtUtil {
                 .sameSite("None")
                 .httpOnly(true)
                 .build();
-        response.setHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
-/*        Cookie cookie = new Cookie(REFRESH_TOKEN, null);
-        cookie.setMaxAge(0);
-        cookie.setHttpOnly(true);
-        //cookie.setSecure(true);
-        cookie.setPath("/");
-        response.addCookie(cookie);*/
-
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 
     public String getCookieToken(HttpServletRequest request, String type) {
         Cookie[] cookies = request.getCookies();
-
-        String cookieName = type.equals("Access") ? ACCESS_TOKEN : REFRESH_TOKEN;
+        String cookieName = getCookieName(type);
 
         AtomicReference<String> cookieToken = new AtomicReference<>();
         if (cookies != null) {
@@ -204,9 +202,40 @@ public class JwtUtil {
         return cookieToken.get();
     }
 
-    public void setResonseJwtToken(HttpServletResponse response, String accessToken, String refreshToken) {
-        setHeaderAccessToken(response, accessToken);
-        setCookieRefreshToken(response, refreshToken);
+    public void setDeleteHeaderAccessToken(HttpServletResponse response) {
+        setHeaderAccessToken(response, "");
+    }
+
+    public void deleteAllToken(HttpServletRequest request, HttpServletResponse response) {
+        //setDeleteHeaderAccessToken(response);
+        setDelCookieToken(response, JwtUtil.ACCESS);
+        setDelCookieToken(response, JwtUtil.REFRESH);
+        
+        // redis refreshToken 삭제
+        String refreshToken = getCookieToken(request, JwtUtil.REFRESH);
+        tokenService.deleteById(refreshToken);
+    }
+
+    public void setResonseJwtToken(HttpServletResponse response, TokenDto tokenDto) {
+        String userId = tokenDto.getUserId();
+        String accessToken = tokenDto.getAccessToken();
+        String refreshToken = tokenDto.getRefreshToken();
+
+        //setHeaderAccessToken(response, accessToken);
+        setCookieToken(response, accessToken, JwtUtil.ACCESS);
+        setCookieToken(response, refreshToken, JwtUtil.REFRESH);
+
+        // redis refreshToken 저장
+        Token newToken = new Token(refreshToken,  userId);
+        tokenService.save(newToken);
+    }
+
+    public String getCookieName(String type) {
+        return type.equals(ACCESS) ? ACCESS_TOKEN : REFRESH_TOKEN;
+    }
+
+    public int getCookieTime(String type) {
+        return type.equals(ACCESS) ? ACCESS_COOKIE_TIME : REFRESH_COOKIE_TIME;
     }
 
 }
