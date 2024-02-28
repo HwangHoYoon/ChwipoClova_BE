@@ -55,8 +55,8 @@ public class WebSecurityConfig {
                 .sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/**").permitAll().anyRequest().authenticated()
-                                //.requestMatchers(authorizeUrl).permitAll().anyRequest().authenticated()
+                                //.requestMatchers("/**").permitAll().anyRequest().authenticated()
+                                .requestMatchers(authorizeUrl).permitAll().anyRequest().authenticated()
                                 //.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 )
