@@ -21,11 +21,12 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowCredentials(true);
         config.setAllowedOrigins(origins);
+        config.setAllowCredentials(true);
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("cache-control", "content-length", "content-type", "expires", "pragma", HttpHeaders.SET_COOKIE, JwtUtil.ACCESS_TOKEN, JwtUtil.REFRESH_TOKEN));
+        config.setExposedHeaders(List.of("cache-control", "content-length", "content-type", "expires", "pragma", HttpHeaders.SET_COOKIE, JwtUtil.ACCESS_TOKEN,  JwtUtil.REFRESH_TOKEN));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
