@@ -47,12 +47,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // WebSecurityConfig 에서 보았던 UsernamePasswordAuthenticationFilter 보다 먼저 동작을 하게 됩니다.
         // 로그인 로그아웃은 제외
+        log.info("doFilterInternal");
         String url = request.getRequestURI();
+        log.info("getRequestURI {}", url);
         if (!Arrays.stream(authorizeUrl).anyMatch(url::equals)) {
             // Access / Refresh 헤더와 쿠키에서 토큰을 가져옴.
             String accessToken = jwtUtil.getCookieToken(request, JwtUtil.ACCESS);
             String refreshToken = jwtUtil.getCookieToken(request, JwtUtil.REFRESH);
 
+            log.info("getRequestURI anyMatch {}", url);
             String loginId;
             if(accessToken != null && jwtUtil.tokenValidation(accessToken)) {
                 loginId = jwtUtil.getIdFromToken(accessToken);
@@ -66,10 +69,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     log.info("유저 갱신 {}", loginId);
                     logRepository.loginLogSave(Long.parseLong(loginId), "유저 갱신 " + loginId);
                 } else { // 리프레시 토큰이 만료 || 리프레시 토큰이 DB와 비교했을때 똑같지 않다면
+                    log.info("refreshToken ext {}", url);
                     jwtExceptionHandler(response, "RefreshToken Expired", HttpStatus.BAD_REQUEST);
                     return;
                 }
             } else { // 리프레시 토큰이 만료 || 리프레시 토큰이 DB와 비교했을때 똑같지 않다면
+                log.info("refreshToken null {}", url);
                 jwtExceptionHandler(response, "RefreshToken Expired", HttpStatus.BAD_REQUEST);
                 return;
             }
