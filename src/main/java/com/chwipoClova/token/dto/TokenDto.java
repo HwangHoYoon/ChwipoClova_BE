@@ -1,6 +1,5 @@
-package com.chwipoClova.common.dto;
+package com.chwipoClova.token.dto;
 
-import com.chwipoClova.user.entity.UserEditor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,10 +9,12 @@ public class TokenDto {
 
     private String accessToken;
     private String refreshToken;
+    private String userId;
 
-    public TokenDto(String accessToken, String refreshToken) {
+    public TokenDto(String accessToken, String refreshToken, String userId) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.userId = userId;
     }
 
 }

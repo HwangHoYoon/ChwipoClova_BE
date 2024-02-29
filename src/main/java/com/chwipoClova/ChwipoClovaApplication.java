@@ -19,9 +19,4 @@ public class ChwipoClovaApplication {
 		SpringApplication.run(ChwipoClovaApplication.class, args);
 	}
 
-	@Bean
-	public MultipartConfigElement multipartConfigElement() {
-		return new MultipartConfigElement("");
-	}
-
 }

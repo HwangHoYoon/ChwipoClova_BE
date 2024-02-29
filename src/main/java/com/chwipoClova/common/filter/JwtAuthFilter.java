@@ -1,8 +1,10 @@
 package com.chwipoClova.common.filter;
 
 import com.chwipoClova.common.exception.ExceptionCode;
+import com.chwipoClova.common.repository.LogRepository;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.utils.JwtUtil;
+import com.chwipoClova.token.entity.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -11,12 +13,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Properties;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,50 +36,47 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private String TOKEN_PREFIX = "Bearer ";
 
+    private final String[] authorizeUrl;
+
+    private final LogRepository logRepository;
+
     @Override
     // HTTP 요청이 오면 WAS(tomcat)가 HttpServletRequest, HttpServletResponse 객체를 만들어 줍니다.
     // 만든 인자 값을 받아옵니다.
     // 요청이 들어오면 diFilterInternal 이 딱 한번 실행된다.
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // WebSecurityConfig 에서 보았던 UsernamePasswordAuthenticationFilter 보다 먼저 동작을 하게 됩니다.
+        // 로그인 로그아웃은 제외
+        String url = request.getRequestURI();
+        if (!Arrays.stream(authorizeUrl).anyMatch(url::equals)) {
+            // Access / Refresh 헤더와 쿠키에서 토큰을 가져옴.
+            String accessToken = jwtUtil.getCookieToken(request, JwtUtil.ACCESS);
+            String refreshToken = jwtUtil.getCookieToken(request, JwtUtil.REFRESH);
 
-        // Access / Refresh 헤더와 쿠키에서 토큰을 가져옴.
-        String accessToken = jwtUtil.getHeaderToken(request, "Access");
-        String refreshToken = jwtUtil.getCookieToken(request, "Refresh");
-
-        if(accessToken != null) {
-            // 어세스 토큰값이 유효하다면 setAuthentication를 통해
-            // security context에 인증 정보저장
-            if(jwtUtil.tokenValidation(accessToken)){
-                jwtUtil.setHeaderAccessToken(response, accessToken);
-                //jwtUtil.setResonseJwtToken(response, accessToken, refreshToken);
-                setAuthentication(jwtUtil.getIdFromToken(accessToken));
-            }
-            // 어세스 토큰이 만료된 상황 && 리프레시 토큰 또한 존재하는 상황
-            else if (refreshToken != null) {
+            String loginId;
+            if(accessToken != null && jwtUtil.tokenValidation(accessToken)) {
+                loginId = jwtUtil.getIdFromToken(accessToken);
+            } else if (refreshToken != null) { // 어세스 토큰이 만료된 상황 && 리프레시 토큰 또한 존재하는 상황
                 // 리프레시 토큰 검증 && 리프레시 토큰 DB에서  토큰 존재유무 확인
-                boolean isRefreshToken = jwtUtil.refreshTokenValidation(refreshToken);
+                Token isRefreshToken = jwtUtil.selectRefreshToken(refreshToken);
                 // 리프레시 토큰이 유효하고 리프레시 토큰이 DB와 비교했을때 똑같다면
-                if (isRefreshToken) {
+                if (isRefreshToken != null) {
                     // 리프레시 토큰으로 아이디 정보 가져오기
-                    String loginId = jwtUtil.getIdFromToken(refreshToken);
-                    // 새로운 어세스 토큰 발급
-                    String newAccessToken = jwtUtil.createToken(loginId, "Access");
-
-                    // 헤더에 어세스 토큰 추가
-                    // 리프레시 토큰은 쿠키로 생성
-                    jwtUtil.setHeaderAccessToken(response, newAccessToken);
-                    //jwtUtil.setResonseJwtToken(response, newAccessToken, refreshToken);
-
-                    // Security context에 인증 정보 넣기
-                    setAuthentication(jwtUtil.getIdFromToken(newAccessToken));
-                }
-                // 리프레시 토큰이 만료 || 리프레시 토큰이 DB와 비교했을때 똑같지 않다면
-                else {
+                    loginId = isRefreshToken.getUserId();
+                    log.info("유저 갱신 {}", loginId);
+                    logRepository.loginLogSave(Long.parseLong(loginId), "유저 갱신 " + loginId);
+                } else { // 리프레시 토큰이 만료 || 리프레시 토큰이 DB와 비교했을때 똑같지 않다면
                     jwtExceptionHandler(response, "RefreshToken Expired", HttpStatus.BAD_REQUEST);
                     return;
                 }
+            } else { // 리프레시 토큰이 만료 || 리프레시 토큰이 DB와 비교했을때 똑같지 않다면
+                jwtExceptionHandler(response, "RefreshToken Expired", HttpStatus.BAD_REQUEST);
+                return;
             }
+            // 새로운 어세스 토큰 발급
+            String newAccessToken = jwtUtil.createToken(loginId, JwtUtil.ACCESS);
+            jwtUtil.setCookieToken(response, newAccessToken, JwtUtil.ACCESS);
+            setAuthentication(loginId);
         }
         filterChain.doFilter(request,response);
     }

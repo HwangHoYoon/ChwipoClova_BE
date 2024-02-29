@@ -85,6 +85,9 @@ dependencies {
 	//PDF
 	implementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '3.0.0'
 
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 }
 
 

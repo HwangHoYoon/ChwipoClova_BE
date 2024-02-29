@@ -3,7 +3,7 @@ package com.chwipoClova.common.utils;
 import com.chwipoClova.common.dto.UserDetailsImpl;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
-import com.chwipoClova.common.repository.ApiLogRepository;
+import com.chwipoClova.common.repository.LogRepository;
 import com.chwipoClova.resume.response.ApiRes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -39,7 +39,7 @@ public class ApiUtils {
 
     private final RestTemplate restTemplate;
 
-    private final ApiLogRepository apiLogRepository;
+    private final LogRepository logRepository;
 
     @Value("${api.url.base}")
     private String apiBaseUrl;
@@ -103,7 +103,7 @@ public class ApiUtils {
         }
 
         // API 로그 적재
-        apiLogRepository.apiLogSave(userId, apiUrl.toString(), reqData, responseAsString.toString(), resultMessage);
+        logRepository.apiLogSave(userId, apiUrl.toString(), reqData, responseAsString.toString(), resultMessage);
 
         if (resultData == null) {
             throw new CommonException(ExceptionCode.API_NULL.getMessage(), ExceptionCode.API_NULL.getCode());
