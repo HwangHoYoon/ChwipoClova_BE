@@ -48,6 +48,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // WebSecurityConfig 에서 보았던 UsernamePasswordAuthenticationFilter 보다 먼저 동작을 하게 됩니다.
         // 로그인 로그아웃은 제외
         String url = request.getRequestURI();
+
         if (!Arrays.stream(authorizeUrl).anyMatch(url::equals)) {
             // Access / Refresh 헤더와 쿠키에서 토큰을 가져옴.
             String accessToken = jwtUtil.getCookieToken(request, JwtUtil.ACCESS);
