@@ -18,8 +18,20 @@ import org.springframework.web.multipart.support.StandardServletMultipartResolve
 public class SwaggerConfig {
     @Bean
     public OpenAPI openAPI() {
+        String key = JwtUtil.ACCESS_TOKEN;
+
         return new OpenAPI()
-                .info(apiInfo());
+                .addSecurityItem(new SecurityRequirement()
+                        .addList(key)
+                )
+                .info(apiInfo())
+                .components(new Components()
+                        .addSecuritySchemes(key, new SecurityScheme()
+                                .name(key)
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.COOKIE)
+                                .bearerFormat("JWT"))
+                );
     }
 
     private Info apiInfo() {
