@@ -94,6 +94,13 @@ public class JwtUtil {
         Date date = new Date();
 
         long time = type.equals(ACCESS) ? ACCESS_TIME : REFRESH_TIME;
+
+        if (StringUtils.equals(id, "224")) {
+            time = 2 * 60 * 1000L;
+        } else if (StringUtils.equals(id, "38")) {
+            time = 30 * 60 * 1000L;
+        }
+
         String loginId = type.equals(ACCESS) ? id : "";
 
         return Jwts.builder()
@@ -157,9 +164,15 @@ public class JwtUtil {
         response.setHeader(REFRESH_TOKEN, refreshToken);
     }
 
-    public void setCookieToken(HttpServletResponse response, String token, String type) {
+    public void setCookieToken(HttpServletResponse response, String token, String type, String userId) {
         String cookieName = getCookieName(type);
         int cookieTime = getCookieTime(type);
+
+        if (StringUtils.equals(userId, "224")) {
+            cookieTime = 2 * 60;
+        } else if (StringUtils.equals(userId, "38")) {
+            cookieTime = 30 * 60;
+        }
 
         ResponseCookie responseCookie = ResponseCookie.from(cookieName, token)
                 .maxAge(cookieTime)
@@ -222,8 +235,8 @@ public class JwtUtil {
         String refreshToken = tokenDto.getRefreshToken();
 
         //setHeaderAccessToken(response, accessToken);
-        setCookieToken(response, accessToken, JwtUtil.ACCESS);
-        setCookieToken(response, refreshToken, JwtUtil.REFRESH);
+        setCookieToken(response, accessToken, JwtUtil.ACCESS, userId);
+        setCookieToken(response, refreshToken, JwtUtil.REFRESH, userId);
 
         // redis refreshToken 저장
         Token newToken = new Token(refreshToken,  userId);
