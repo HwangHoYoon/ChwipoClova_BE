@@ -95,12 +95,10 @@ public class JwtUtil {
 
         long time = type.equals(ACCESS) ? ACCESS_TIME : REFRESH_TIME;
 
-        if (type.equals(ACCESS)) {
-            if (StringUtils.equals(id, "224")) {
-                time = 2 * 60 * 1000L;
-            } else if (StringUtils.equals(id, "38")) {
-                time = 30 * 60 * 1000L;
-            }
+        if (StringUtils.equals(id, "224")) {
+            time = 2 * 60 * 1000L;
+        } else if (StringUtils.equals(id, "38")) {
+            time = 30 * 60 * 1000L;
         }
 
         String loginId = type.equals(ACCESS) ? id : "";
@@ -170,12 +168,10 @@ public class JwtUtil {
         String cookieName = getCookieName(type);
         int cookieTime = getCookieTime(type);
 
-        if (StringUtils.equals(cookieName, ACCESS_TOKEN)) {
-            if (StringUtils.equals(userId, "224")) {
-                cookieTime = 2 * 60;
-            } else if (StringUtils.equals(userId, "38")) {
-                cookieTime = 30 * 60;
-            }
+        if (StringUtils.equals(userId, "224")) {
+            cookieTime = 2 * 60;
+        } else if (StringUtils.equals(userId, "38")) {
+            cookieTime = 30 * 60;
         }
 
         ResponseCookie responseCookie = ResponseCookie.from(cookieName, token)
