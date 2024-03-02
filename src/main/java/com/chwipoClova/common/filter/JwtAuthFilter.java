@@ -75,7 +75,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
             // 새로운 어세스 토큰 발급
             String newAccessToken = jwtUtil.createToken(loginId, JwtUtil.ACCESS);
-            jwtUtil.setCookieToken(response, newAccessToken, JwtUtil.ACCESS);
+            jwtUtil.setCookieToken(response, newAccessToken, JwtUtil.ACCESS, loginId);
             setAuthentication(loginId);
         }
         filterChain.doFilter(request,response);
