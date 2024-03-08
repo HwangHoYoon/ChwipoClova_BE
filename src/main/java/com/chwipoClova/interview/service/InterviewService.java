@@ -74,10 +74,10 @@ public class InterviewService {
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
         Resume resume = resumeRepository.findByUserUserIdAndResumeId(userId, resumeId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
 
-        List<Interview> interviewList = interviewRepository.findByUserUserIdOrderByRegDate(userId);
+/*        List<Interview> interviewList = interviewRepository.findByUserUserIdOrderByRegDate(userId);
         if (interviewList != null && interviewList.size() >= interviewLimitSize) {
             throw new CommonException(ExceptionCode.INTERVIEW_LIST_OVER.getMessage(), ExceptionCode.INTERVIEW_LIST_OVER.getCode());
-        }
+        }*/
 
         // 채용 공고 등록 및 조회
         RecruitInsertReq recruitInsertReq = new RecruitInsertReq();
