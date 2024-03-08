@@ -5,6 +5,7 @@ import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.repository.LogRepository;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
+import com.chwipoClova.common.service.LogService;
 import com.chwipoClova.common.utils.JwtUtil;
 import com.chwipoClova.token.dto.TokenDto;
 import com.chwipoClova.token.entity.Token;
@@ -71,7 +72,7 @@ public class UserService {
     @Value("${kakao.redirect_local_uri}")
     private String redirectLocalUri;
 
-    private final LogRepository logRepository;
+    private final LogService logService;
 
     public UserSnsUrlRes getKakaoUrl() {
         String kakaoUrl = kakaoAuthUrl + "?response_type=code" + "&client_id=" + clientId
@@ -137,7 +138,7 @@ public class UserService {
                     .build();
             log.info("기존유저 {}, {}",userLoginRes.getUserId(), userLoginRes.getName());
             // API 로그 적재
-            logRepository.loginLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
+            logService.loginUserLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
             return new CommonResponse<>(String.valueOf(HttpStatus.OK.value()), userLoginRes, HttpStatus.OK.getReasonPhrase());
         } else {
             User user = User.builder()
@@ -152,7 +153,7 @@ public class UserService {
             User userResult = userRepository.save(user);
             log.info("신규유저 {}, {}",userResult.getUserId(), userResult.getName());
             // API 로그 적재
-            logRepository.loginLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
+            logService.newUserLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
             return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
         }
 
@@ -307,7 +308,8 @@ public class UserService {
                     .modifyDate(userInfoRst.getModifyDate())
                     .build();
             log.info("기존유저 {}, {}",userLoginRes.getUserId(), userLoginRes.getName());
-            logRepository.loginLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
+
+            logService.loginUserLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
             return new CommonResponse<>(String.valueOf(HttpStatus.OK.value()), userLoginRes, HttpStatus.OK.getReasonPhrase());
         } else {
             User user = User.builder()
@@ -321,7 +323,7 @@ public class UserService {
                     .build();
             User userResult = userRepository.save(user);
             log.info("신규유저 {}, {}",userResult.getUserId(), userResult.getName());
-            logRepository.loginLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
+            logService.newUserLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
             return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
         }
     }

@@ -11,4 +11,7 @@ public interface LogRepository extends JpaRepository<ApiLog, Long> {
 
     @Procedure("LOGIN_LOG_SAVE")
     void loginLogSave(Long userId, String message);
+
+    @Procedure("ACTIVITY_LOG_SAVE")
+    void activityLogSave(Long userId, Integer logType, String message);
 }

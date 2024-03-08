@@ -4,6 +4,7 @@ import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
+import com.chwipoClova.common.service.LogService;
 import com.chwipoClova.common.utils.ApiUtils;
 import com.chwipoClova.common.utils.FileUtil;
 import com.chwipoClova.resume.entity.Resume;
@@ -75,6 +76,8 @@ public class ResumeService {
 
     private final ApiUtils apiUtils;
 
+    private final LogService logService;
+
     @Value("${api.token_limit.base}")
     private int apiBaseTokenLimit;
 
@@ -92,10 +95,10 @@ public class ResumeService {
         assert originalName != null;
 
         // 기존 이력서 목록이 3건 이상이면 오류 발생
-        List<Resume> resumeList = resumeRepository.findByUserUserIdOrderByRegDate(user.getUserId());
+/*        List<Resume> resumeList = resumeRepository.findByUserUserIdOrderByRegDate(user.getUserId());
         if (resumeList != null && resumeList.size() >= resumeLimitSize) {
             throw new CommonException(ExceptionCode.RESUME_LIST_OVER.getMessage(), ExceptionCode.RESUME_LIST_OVER.getCode());
-        }
+        }*/
 
         String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
 
@@ -149,6 +152,9 @@ public class ResumeService {
                 .build();
 
         Resume resumeRst = resumeRepository.save(resume);
+
+        log.info("이력서 등록 이력서 ID : {}, 로그인 ID : {}", resumeRst.getResumeId(), resumeRst.getUser().getUserId());
+        logService.refreshUserLogSave(resumeRst.getUser().getUserId(), "이력서 등록 이력서 ID : " + resumeRst.getResumeId() + ", 로그인 ID : " + resumeRst.getUser().getUserId());
 
         // 파일 삭제
         pdfFile.delete();

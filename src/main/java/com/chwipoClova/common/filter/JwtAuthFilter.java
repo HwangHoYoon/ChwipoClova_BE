@@ -3,6 +3,7 @@ package com.chwipoClova.common.filter;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.repository.LogRepository;
 import com.chwipoClova.common.response.CommonResponse;
+import com.chwipoClova.common.service.LogService;
 import com.chwipoClova.common.utils.JwtUtil;
 import com.chwipoClova.token.entity.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +39,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final String[] authorizeUrl;
 
-    private final LogRepository logRepository;
+    private final LogService logService;
 
     @Override
     // HTTP 요청이 오면 WAS(tomcat)가 HttpServletRequest, HttpServletResponse 객체를 만들어 줍니다.
@@ -65,7 +66,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     // 리프레시 토큰으로 아이디 정보 가져오기
                     loginId = isRefreshToken.getUserId();
                     log.info("유저 갱신 {}", loginId);
-                    logRepository.loginLogSave(Long.parseLong(loginId), "유저 갱신 " + loginId);
+
+                    logService.refreshUserLogSave(Long.parseLong(loginId), "유저 갱신 " + loginId);
                 } else { // 리프레시 토큰이 만료 || 리프레시 토큰이 DB와 비교했을때 똑같지 않다면
                     jwtExceptionHandler(response, "RefreshToken Expired", HttpStatus.BAD_REQUEST);
                     return;
