@@ -95,10 +95,10 @@ public class ResumeService {
         assert originalName != null;
 
         // 기존 이력서 목록이 3건 이상이면 오류 발생
-/*        List<Resume> resumeList = resumeRepository.findByUserUserIdOrderByRegDate(user.getUserId());
+        List<Resume> resumeList = resumeRepository.findByUserUserIdOrderByRegDate(user.getUserId());
         if (resumeList != null && resumeList.size() >= resumeLimitSize) {
             throw new CommonException(ExceptionCode.RESUME_LIST_OVER.getMessage(), ExceptionCode.RESUME_LIST_OVER.getCode());
-        }*/
+        }
 
         String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
 
