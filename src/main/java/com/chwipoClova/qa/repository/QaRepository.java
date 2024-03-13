@@ -12,15 +12,15 @@ import java.util.Optional;
 
 public interface QaRepository extends JpaRepository<Qa, Long> {
 
-    Optional<Qa> findByInterviewInterviewIdAndQaId(Long interviewId, Long qaId);
+    Optional<Qa> findByInterviewInterviewIdAndQaIdAndDelFlag(Long interviewId, Long qaId, Integer delFlag);
 
-    List<Qa> findByInterviewInterviewIdOrderByQaId(Long interviewId);
+    List<Qa> findByInterviewInterviewIdAndDelFlagOrderByQaId(Long interviewId, Integer delFlag);
 
-    Qa findFirstByInterviewInterviewIdOrderByQaIdDesc(Long interviewId);
+    Qa findFirstByInterviewInterviewIdAndDelFlagOrderByQaIdDesc(Long interviewId, Integer delFlag);
 
     @Modifying
-    @Query(value = "update Qa q set q.answer = null where q.interviewId = :interviewId and answer is not null", nativeQuery = true)
-    int initQa(@Param("interviewId") Long interviewId);
+    @Query(value = "update Qa q set q.answer = null where q.interviewId = :interviewId and answer is not null and delFlag =:delFlag", nativeQuery = true)
+    int initQa(@Param("interviewId") Long interviewId, @Param("delFlag") Integer delFlag);
 
     void deleteByInterviewInterviewId(Long interviewId);
 }

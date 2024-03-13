@@ -21,7 +21,7 @@ public enum MessageCode {
 
     SUCCESS("604", "정상적으로 처리되었습니다."),
 
-    NEW_USER("700", "신규 가입되었습니다.")
+    NEW_USER("700", "신규 가입되었습니다."),
     ;
 
     private static final MessageCode[] VALUES;

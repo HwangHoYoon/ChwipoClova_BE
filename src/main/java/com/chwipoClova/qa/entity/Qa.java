@@ -53,6 +53,14 @@ public class Qa {
     @JoinColumn(name = "interviewId")
     private Interview interview;
 
+    @Column(name = "delFlag")
+    @Schema(description = "삭제여부")
+    private Integer delFlag;
+
+    @Column(name = "delDate")
+    @Schema(description = "삭제일")
+    private Date delDate;
+
     @PrePersist
     public void prePersist() {
         this.regDate = new Date(); // 현재 날짜와 시간으로 등록일 설정
@@ -66,11 +74,15 @@ public class Qa {
 
     public QaEditor.QaEditorBuilder toEditor() {
         return QaEditor.builder()
-                .answer(answer);
+                .answer(answer)
+                .delFlag(delFlag)
+                .delDate(delDate);
     }
 
     public void edit(QaEditor qaEditor) {
         answer = qaEditor.getAnswer();
+        delFlag = qaEditor.getDelFlag();
+        delDate = qaEditor.getDelDate();
     }
 
 }

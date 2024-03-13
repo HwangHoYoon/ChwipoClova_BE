@@ -15,6 +15,7 @@ import com.chwipoClova.interview.response.InterviewInsertRes;
 import com.chwipoClova.interview.response.InterviewListRes;
 import com.chwipoClova.interview.response.InterviewQaListRes;
 import com.chwipoClova.interview.response.InterviewRes;
+import com.chwipoClova.qa.entity.Qa;
 import com.chwipoClova.qa.request.QaAnswerInsertReq;
 import com.chwipoClova.qa.request.QaGenerateReq;
 import com.chwipoClova.qa.request.QaQuestionInsertReq;
@@ -28,6 +29,7 @@ import com.chwipoClova.recruit.response.RecruitInsertRes;
 import com.chwipoClova.recruit.service.RecruitService;
 import com.chwipoClova.resume.entity.Resume;
 import com.chwipoClova.resume.repository.ResumeRepository;
+import com.chwipoClova.resume.service.ResumeService;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,7 +52,7 @@ import java.util.List;
 @Slf4j
 public class InterviewService {
 
-    private final ResumeRepository resumeRepository;
+    private final ResumeService resumeService;
 
     private final UserRepository userRepository;
 
@@ -72,7 +74,7 @@ public class InterviewService {
         String recruitContent = interviewInsertReq.getRecruitContent();
 
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Resume resume = resumeRepository.findByUserUserIdAndResumeId(userId, resumeId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
+        Resume resume = resumeService.findByUserUserIdAndResumeIdAndDelFlag(userId, resumeId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
 
 /*        List<Interview> interviewList = interviewRepository.findByUserUserIdOrderByRegDate(userId);
         if (interviewList != null && interviewList.size() >= interviewLimitSize) {
@@ -265,7 +267,8 @@ public class InterviewService {
     }
 
     public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq) throws IOException {
-        return feedbackService.generateFeedback(feedbackGenerateReq);
+        List<Qa> qaList = qaService.findByInterviewInterviewIdAndDelFlagOrderByQaId(feedbackGenerateReq.getInterviewId());
+        return feedbackService.generateFeedback(feedbackGenerateReq, qaList);
     }
 
     @Transactional

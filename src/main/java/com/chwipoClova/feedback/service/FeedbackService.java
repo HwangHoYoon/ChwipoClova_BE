@@ -1,5 +1,6 @@
 package com.chwipoClova.feedback.service;
 
+import com.chwipoClova.common.enums.CommonCode;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
@@ -18,6 +19,7 @@ import com.chwipoClova.interview.repository.InterviewRepository;
 import com.chwipoClova.qa.entity.Qa;
 import com.chwipoClova.qa.entity.QaEditor;
 import com.chwipoClova.qa.repository.QaRepository;
+import com.chwipoClova.qa.service.QaService;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -82,7 +84,7 @@ public class FeedbackService {
     }
 
     @Transactional
-    public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq) throws IOException {
+    public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq, List<Qa> qaList) throws IOException {
         Long interviewId = feedbackGenerateReq.getInterviewId();
         Long userId = feedbackGenerateReq.getUserId();
 
@@ -100,7 +102,7 @@ public class FeedbackService {
 
         AtomicLong answerCnt = new AtomicLong();
         List<FeedbackInsertReq> feedbackInsertListReq = new ArrayList<>();
-        qaRepository.findByInterviewInterviewIdOrderByQaId(interviewId).stream().forEach(qa -> {
+        qaList.stream().forEach(qa -> {
             String answer = qa.getAnswer();
 
             // 답변 내용이 있을 경우 답변 저장 및 피드백 생성

@@ -1,5 +1,6 @@
 package com.chwipoClova.qa.service;
 
+import com.chwipoClova.common.enums.CommonCode;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
@@ -30,7 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -90,7 +93,7 @@ public class QaService {
 
         List<FeedbackInsertReq> feedbackInsertListReq = new ArrayList<>();
 
-        Qa lastQa = qaRepository.findFirstByInterviewInterviewIdOrderByQaIdDesc(interviewId);
+        Qa lastQa = findFirstByInterviewInterviewIdAndDelFlagOrderByQaIdDesc(interviewId);
         Long lastQaId = lastQa.getQaId();
 
         StringBuilder questionStringBuilder = new StringBuilder();
@@ -103,7 +106,7 @@ public class QaService {
 
             // 답변 내용이 있을 경우 답변 저장 및 피드백 생성
             if (StringUtils.isNotBlank(answer)) {
-                Qa qa = qaRepository.findByInterviewInterviewIdAndQaId(interviewId, qaAnswerDataInsertReq.getQaId()).orElseThrow(() -> new CommonException(ExceptionCode.QA_NULL.getMessage(), ExceptionCode.QA_NULL.getCode()));
+                Qa qa = findByInterviewInterviewIdAndQaIdAndDelFlag(interviewId, qaAnswerDataInsertReq.getQaId()).orElseThrow(() -> new CommonException(ExceptionCode.QA_NULL.getMessage(), ExceptionCode.QA_NULL.getCode()));
                 QaEditor.QaEditorBuilder editorBuilder = qa.toEditor();
                 QaEditor qaEditor = editorBuilder.answer(qaAnswerDataInsertReq.getAnswer())
                         .build();
@@ -156,6 +159,14 @@ public class QaService {
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
+    public Optional<Qa> findByInterviewInterviewIdAndQaIdAndDelFlag(Long interviewId, Long qaId) {
+        return qaRepository.findByInterviewInterviewIdAndQaIdAndDelFlag(interviewId, qaId, CommonCode.DELETE_N.getCode());
+    }
+
+    public Qa findFirstByInterviewInterviewIdAndDelFlagOrderByQaIdDesc(Long interviewId) {
+        return qaRepository.findFirstByInterviewInterviewIdAndDelFlagOrderByQaIdDesc(interviewId, CommonCode.DELETE_N.getCode());
+    }
+
     private String getDelStartNum(String text) {
         if (text.indexOf(".") != -1) {
             String num = text.substring(0, text.indexOf("."));
@@ -173,7 +184,7 @@ public class QaService {
     public List<QaListRes> selectQaList(Long interviewId) {
         List<QaListRes> qaListResList = new ArrayList<>();
 
-        List<Qa> qaList = qaRepository.findByInterviewInterviewIdOrderByQaId(interviewId);
+        List<Qa> qaList = findByInterviewInterviewIdAndDelFlagOrderByQaId(interviewId);
 
         qaList.stream().forEach(qa -> {
             QaListRes qaListRes = QaListRes.builder()
@@ -258,7 +269,7 @@ public class QaService {
 
     @Transactional
     public void initQa(Long interviewId) {
-        qaRepository.initQa(interviewId);
+        qaRepository.initQa(interviewId, CommonCode.DELETE_N.getCode());
     }
 
     public void deleteQa(Long interviewId) {
@@ -277,7 +288,7 @@ public class QaService {
             throw new CommonException(ExceptionCode.INTERVIEW_COMPLETE.getMessage(), ExceptionCode.INTERVIEW_COMPLETE.getCode());
         }
 
-        List<Qa> qaList = qaRepository.findByInterviewInterviewIdOrderByQaId(interviewId);
+        List<Qa> qaList = findByInterviewInterviewIdAndDelFlagOrderByQaId(interviewId);
 
         // 피드백 데이터가 있는지 확인 있으면 오류 발생
         qaList.stream().forEach(qa -> {
@@ -288,10 +299,22 @@ public class QaService {
         });
 
         // 기존 질문 전부 삭제
-        qaRepository.deleteAll(qaList);
+        // qaRepository.deleteAll(qaList);
+
+        // 실제 삭제에서 상태값 변경으로 수정
+        qaList.stream().forEach(qa -> {
+            QaEditor.QaEditorBuilder editorBuilder = qa.toEditor();
+            QaEditor qaEditor = editorBuilder.delFlag(1).delDate(new Date())
+                    .build();
+            qa.edit(qaEditor);
+        });
 
         // 새로운 질문 생성
         insertQa(interview);
+    }
+
+    public List<Qa> findByInterviewInterviewIdAndDelFlagOrderByQaId(Long interviewId) {
+        return qaRepository.findByInterviewInterviewIdAndDelFlagOrderByQaId(interviewId, CommonCode.DELETE_N.getCode());
     }
 
     public List<QaQuestionInsertRes> insertQa(Interview interviewRst) throws IOException {

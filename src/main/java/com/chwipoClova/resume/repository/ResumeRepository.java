@@ -8,9 +8,9 @@ import java.util.Optional;
 
 public interface ResumeRepository extends JpaRepository<Resume, Long> {
 
-    List<Resume> findByUserUserIdOrderByRegDate(Long userId);
+    List<Resume> findByUserUserIdAndDelFlagOrderByRegDate(Long userId, Integer delFlag);
 
-    Optional<Resume> findByUserUserIdAndResumeId(Long userId, Long resumeId);
+    Optional<Resume> findByUserUserIdAndResumeIdAndDelFlag(Long userId, Long resumeId, Integer delFlag);
 
-    Optional<Resume> findTop1ByUserUserIdOrderByRegDate(Long userId);
+    Optional<Resume> findTop1ByUserUserIdAndDelFlagOrderByRegDate(Long userId, Integer delFlag);
 }

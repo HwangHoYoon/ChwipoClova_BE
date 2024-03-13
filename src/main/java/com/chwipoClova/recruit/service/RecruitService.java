@@ -1,14 +1,17 @@
 package com.chwipoClova.recruit.service;
 
 
+import com.chwipoClova.common.enums.CommonCode;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.utils.ApiUtils;
 import com.chwipoClova.common.utils.FileUtil;
 import com.chwipoClova.recruit.entity.Recruit;
+import com.chwipoClova.recruit.entity.RecruitEditor;
 import com.chwipoClova.recruit.repository.RecruitRepository;
 import com.chwipoClova.recruit.request.RecruitInsertReq;
 import com.chwipoClova.recruit.response.RecruitInsertRes;
+import com.chwipoClova.resume.entity.ResumeEditor;
 import com.chwipoClova.resume.response.ApiRes;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
@@ -253,11 +256,19 @@ public class RecruitService {
     @Transactional
     public void deleteBeforeRecruit() {
         Timestamp baseDate = Timestamp.valueOf(LocalDate.now().minusDays(14).atStartOfDay());
-        List<Recruit> recruitList = recruitRepository.findByRegDateLessThanEqual(baseDate);
+        List<Recruit> recruitList = recruitRepository.findByDelFlagAndRegDateLessThanEqual(CommonCode.DELETE_N.getCode(),baseDate);
         if (recruitList != null) {
             if (recruitList.size() > 0) {
                 log.info("deleteBeforeRecruit size {}, baseDate {}", recruitList.size() , baseDate);
-                recruitRepository.deleteAll(recruitList);
+
+                // 채용공고 삭제에서 상태값 변경으로 수정
+                // recruitRepository.deleteAll(recruitList);
+                recruitList.stream().forEach(recruit -> {
+                    RecruitEditor.RecruitEditorBuilder editorBuilder = recruit.toEditor();
+                    RecruitEditor recruitEditor = editorBuilder.delFlag(1)
+                            .build();
+                    recruit.edit(recruitEditor);
+                });
             }
         }
     }

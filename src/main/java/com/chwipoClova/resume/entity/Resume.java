@@ -57,9 +57,33 @@ public class Resume {
     @JoinColumn(name = "userId")
     private User user;
 
+    @Column(name = "delFlag")
+    @Schema(description = "삭제여부")
+    private Integer delFlag;
+
+    @Column(name = "modifyDate")
+    @Schema(description = "수정일")
+    private Date modifyDate;
+
     // @PrePersist 메서드 정의 (최초 등록시 호출)
     @PrePersist
     public void prePersist() {
         this.regDate = new Date(); // 현재 날짜와 시간으로 등록일 설정
+    }
+
+    // @PreUpdate 메서드 정의 (업데이트 시 호출)
+    @PreUpdate
+    public void preUpdate() {
+        this.modifyDate = new Date(); // 현재 날짜와 시간으로 수정일 업데이트
+    }
+
+
+    public ResumeEditor.ResumeEditorBuilder toEditor() {
+        return ResumeEditor.builder()
+                .delFlag(delFlag);
+    }
+
+    public void edit(ResumeEditor resumeEditor) {
+        delFlag = resumeEditor.getDelFlag();
     }
 }

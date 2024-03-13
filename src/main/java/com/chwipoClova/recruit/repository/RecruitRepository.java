@@ -7,5 +7,5 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public interface RecruitRepository extends JpaRepository<Recruit, Long> {
-    List<Recruit> findByRegDateLessThanEqual(Timestamp baseDate);
+    List<Recruit> findByDelFlagAndRegDateLessThanEqual(Integer delFlag, Timestamp baseDate);
 }

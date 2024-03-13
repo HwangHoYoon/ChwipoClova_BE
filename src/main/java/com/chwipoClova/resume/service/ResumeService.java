@@ -1,5 +1,6 @@
 package com.chwipoClova.resume.service;
 
+import com.chwipoClova.common.enums.CommonCode;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
@@ -8,50 +9,33 @@ import com.chwipoClova.common.service.LogService;
 import com.chwipoClova.common.utils.ApiUtils;
 import com.chwipoClova.common.utils.FileUtil;
 import com.chwipoClova.resume.entity.Resume;
+import com.chwipoClova.resume.entity.ResumeEditor;
 import com.chwipoClova.resume.repository.ResumeRepository;
 import com.chwipoClova.resume.request.ResumeDeleteOldReq;
 import com.chwipoClova.resume.request.ResumeDeleteReq;
 import com.chwipoClova.resume.response.ResumeListRes;
 import com.chwipoClova.resume.response.ResumeUploadRes;
-import com.chwipoClova.resume.response.ApiRes;
 import com.chwipoClova.user.entity.User;
 import com.chwipoClova.user.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Unmarshaller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.*;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -95,7 +79,7 @@ public class ResumeService {
         assert originalName != null;
 
         // 기존 이력서 목록이 3건 이상이면 오류 발생
-        List<Resume> resumeList = resumeRepository.findByUserUserIdOrderByRegDate(user.getUserId());
+        List<Resume> resumeList = findByUserUserIdAndDelFlagOrderByRegDate(user.getUserId());
         if (resumeList != null && resumeList.size() >= resumeLimitSize) {
             throw new CommonException(ExceptionCode.RESUME_LIST_OVER.getMessage(), ExceptionCode.RESUME_LIST_OVER.getCode());
         }
@@ -188,7 +172,7 @@ public class ResumeService {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
 
-        List<Resume> resumeList = resumeRepository.findByUserUserIdOrderByRegDate(user.getUserId());
+        List<Resume> resumeList = findByUserUserIdAndDelFlagOrderByRegDate(user.getUserId());
 
         resumeList.stream().forEach(resume -> {
             ResumeListRes resumeListRes = ResumeListRes.builder()
@@ -202,6 +186,9 @@ public class ResumeService {
         return resumeListResList;
     }
 
+    public List<Resume> findByUserUserIdAndDelFlagOrderByRegDate(Long userId) {
+        return resumeRepository.findByUserUserIdAndDelFlagOrderByRegDate(userId, CommonCode.DELETE_N.getCode());
+    }
 
     @Transactional
     public CommonResponse deleteResume(ResumeDeleteReq resumeDeleteReq) {
@@ -209,18 +196,25 @@ public class ResumeService {
         Long userId = resumeDeleteReq.getUserId();
 
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Resume resume = resumeRepository.findByUserUserIdAndResumeId(userId, resumeId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
+        Resume resume = findByUserUserIdAndResumeIdAndDelFlag(userId, resumeId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
         return resumeDelete(resume);
     }
 
+    public Optional<Resume> findByUserUserIdAndResumeIdAndDelFlag(Long userId, Long resumeId) {
+        return resumeRepository.findByUserUserIdAndResumeIdAndDelFlag(userId, resumeId, CommonCode.DELETE_N.getCode());
+    }
 
     @Transactional
     public CommonResponse deleteOldResume(ResumeDeleteOldReq resumeDeleteOldReq) {
         Long userId = resumeDeleteOldReq.getUserId();
 
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Resume resume = resumeRepository.findTop1ByUserUserIdOrderByRegDate(userId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
+        Resume resume = findTop1ByUserUserIdAndDelFlagOrderByRegDate(userId).orElseThrow(() -> new CommonException(ExceptionCode.RESUME_NULL.getMessage(), ExceptionCode.RESUME_NULL.getCode()));
         return resumeDelete(resume);
+    }
+
+    public Optional<Resume> findTop1ByUserUserIdAndDelFlagOrderByRegDate(Long userId) {
+        return resumeRepository.findTop1ByUserUserIdAndDelFlagOrderByRegDate(userId, CommonCode.DELETE_N.getCode());
     }
 
     private CommonResponse resumeDelete(Resume resume) {
@@ -237,7 +231,13 @@ public class ResumeService {
             }
         }
 
-        resumeRepository.delete(resume);
+        // 이력서 삭제에서 상태값 변경으로 수정
+        //resumeRepository.delete(resume);
+        ResumeEditor.ResumeEditorBuilder editorBuilder = resume.toEditor();
+        ResumeEditor resumeEditor = editorBuilder.delFlag(1)
+                .build();
+        resume.edit(resumeEditor);
+
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 

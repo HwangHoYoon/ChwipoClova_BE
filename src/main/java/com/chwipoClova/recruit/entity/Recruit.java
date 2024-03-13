@@ -1,5 +1,6 @@
 package com.chwipoClova.recruit.entity;
 
+import com.chwipoClova.resume.entity.ResumeEditor;
 import com.chwipoClova.user.entity.User;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -65,8 +66,30 @@ public class Recruit {
     @JoinColumn(name = "userId")
     private User user;
 
+    @Column(name = "delFlag")
+    @Schema(description = "삭제여부")
+    private Integer delFlag;
+
+    @Column(name = "modifyDate")
+    @Schema(description = "수정일")
+    private Date modifyDate;
+
     @PrePersist
     public void prePersist() {
         this.regDate = new Date(); // 현재 날짜와 시간으로 등록일 설정
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.modifyDate = new Date(); // 현재 날짜와 시간으로 수정일 업데이트
+    }
+
+    public RecruitEditor.RecruitEditorBuilder toEditor() {
+        return RecruitEditor.builder()
+                .delFlag(delFlag);
+    }
+
+    public void edit(RecruitEditor recruitEditor) {
+        delFlag = recruitEditor.getDelFlag();
     }
 }
