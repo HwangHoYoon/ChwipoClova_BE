@@ -61,6 +61,14 @@ public class Interview {
     @JoinColumn(name = "userId")
     private User user;
 
+    @Column(name = "delFlag")
+    @Schema(description = "삭제여부")
+    private Integer delFlag;
+
+    @Column(name = "delDate")
+    @Schema(description = "삭제일")
+    private Date delDate;
+
     // @PreUpdate 메서드 정의 (업데이트 시 호출)
     @PreUpdate
     public void preUpdate() {
@@ -77,12 +85,16 @@ public class Interview {
     public InterviewEditor.InterviewEditorBuilder toEditor() {
         return InterviewEditor.builder()
                 .status(status)
-                .feedback(feedback);
+                .feedback(feedback)
+                .delFlag(delFlag)
+                .delDate(delDate);
     }
 
     public void edit(InterviewEditor interviewEditor) {
         status = interviewEditor.getStatus();
         feedback = interviewEditor.getFeedback();
+        delFlag = interviewEditor.getDelFlag();
+        delDate = interviewEditor.getDelDate();
     }
 
 }

@@ -234,7 +234,7 @@ public class ResumeService {
         // 이력서 삭제에서 상태값 변경으로 수정
         //resumeRepository.delete(resume);
         ResumeEditor.ResumeEditorBuilder editorBuilder = resume.toEditor();
-        ResumeEditor resumeEditor = editorBuilder.delFlag(1)
+        ResumeEditor resumeEditor = editorBuilder.delFlag(CommonCode.DELETE_Y.getCode())
                 .build();
         resume.edit(resumeEditor);
 

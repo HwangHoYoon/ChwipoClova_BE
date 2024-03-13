@@ -84,10 +84,9 @@ public class QaService {
     }
 
     @Transactional
-    public CommonResponse insertAnswer(QaAnswerInsertReq qaAnswerInsertReq) throws IOException {
+    public CommonResponse insertAnswer(QaAnswerInsertReq qaAnswerInsertReq, Interview interview) throws IOException {
         Long userId = qaAnswerInsertReq.getUserId();
         Long interviewId = qaAnswerInsertReq.getInterviewId();
-        Interview interview = interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
 
         List<QaAnswerDataInsertReq> qaAnswerDataInsertReqList = qaAnswerInsertReq.getAnswerData();
 
@@ -276,12 +275,11 @@ public class QaService {
         qaRepository.deleteByInterviewInterviewId(interviewId);
     }
 
-    public void generateQa(QaGenerateReq qaGenerateReq) throws IOException {
+    public void generateQa(QaGenerateReq qaGenerateReq, Interview interview) throws IOException {
         Long interviewId = qaGenerateReq.getInterviewId();
         Long userId = qaGenerateReq.getUserId();
 
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Interview interview = interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
         Integer status = interview.getStatus();
 
         if (status != 0) {
@@ -304,7 +302,7 @@ public class QaService {
         // 실제 삭제에서 상태값 변경으로 수정
         qaList.stream().forEach(qa -> {
             QaEditor.QaEditorBuilder editorBuilder = qa.toEditor();
-            QaEditor qaEditor = editorBuilder.delFlag(1).delDate(new Date())
+            QaEditor qaEditor = editorBuilder.delFlag(CommonCode.DELETE_Y.getCode()).delDate(new Date())
                     .build();
             qa.edit(qaEditor);
         });

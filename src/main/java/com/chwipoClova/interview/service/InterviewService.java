@@ -1,5 +1,6 @@
 package com.chwipoClova.interview.service;
 
+import com.chwipoClova.common.enums.CommonCode;
 import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import com.chwipoClova.common.response.CommonResponse;
@@ -7,6 +8,7 @@ import com.chwipoClova.common.response.MessageCode;
 import com.chwipoClova.feedback.request.FeedbackGenerateReq;
 import com.chwipoClova.feedback.service.FeedbackService;
 import com.chwipoClova.interview.entity.Interview;
+import com.chwipoClova.interview.entity.InterviewEditor;
 import com.chwipoClova.interview.repository.InterviewRepository;
 import com.chwipoClova.interview.request.InterviewDeleteReq;
 import com.chwipoClova.interview.request.InterviewInitQaReq;
@@ -45,7 +47,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -114,7 +118,7 @@ public class InterviewService {
 
     public InterviewRes selectInterview(Long userId, Long interviewId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Interview interview = interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
+        Interview interview = findByUserUserIdAndInterviewIdAndDelFlag(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
 
         List<QaListForFeedbackRes> listForFeedbackResList = qaService.selectQaListForFeedback(interview.getInterviewId());
 
@@ -129,10 +133,14 @@ public class InterviewService {
                 .build();
     }
 
+    public Optional<Interview> findByUserUserIdAndInterviewIdAndDelFlag(Long userId, Long interviewId) {
+        return interviewRepository.findByUserUserIdAndInterviewIdAndDelFlag(userId, interviewId, CommonCode.DELETE_N.getCode());
+    }
+
     public List<InterviewListRes> selectInterviewList(Long userId) {
         List<InterviewListRes> interviewListRes = new ArrayList<>();
 
-        List<Interview> interviewList = interviewRepository.findByUserUserIdOrderByRegDate(userId);
+        List<Interview> interviewList = findByUserUserIdOrderByRegDate(userId);
 
         interviewList.stream().forEach(interview -> {
             QaCountRes qaCountRes = qaService.selectQaListUseCount(interview.getInterviewId());
@@ -152,9 +160,13 @@ public class InterviewService {
         return interviewListRes;
     }
 
+    public List<Interview> findByUserUserIdOrderByRegDate(Long userId) {
+        return interviewRepository.findByUserUserIdAndDelFlagOrderByRegDate(userId, CommonCode.DELETE_N.getCode());
+    }
+
     public InterviewQaListRes selectQaList(Long userId, Long interviewId) {
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
+        findByUserUserIdAndInterviewIdAndDelFlag(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
 
         QaCountRes qaCountRes = qaService.selectQaListUseCount(interviewId);
         Integer totalCnt = qaCountRes.getTotalCnt();
@@ -177,7 +189,7 @@ public class InterviewService {
         Long userId = interviewInitQaReq.getUserId();
         Long interviewId = interviewInitQaReq.getInterviewId();
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Interview interview = interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
+        Interview interview = findByUserUserIdAndInterviewIdAndDelFlag(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
 
         Integer status = interview.getStatus();
 
@@ -191,7 +203,7 @@ public class InterviewService {
     }
 
     public void downloadInterview(Long userId, Long interviewId, HttpServletResponse response) throws IOException {
-        interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
+        findByUserUserIdAndInterviewIdAndDelFlag(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
 
         InterviewRes interviewRes = selectInterview(userId, interviewId);
 
@@ -267,13 +279,15 @@ public class InterviewService {
     }
 
     public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq) throws IOException {
+        Interview interview = findByUserUserIdAndInterviewIdAndDelFlag(feedbackGenerateReq.getUserId(), feedbackGenerateReq.getInterviewId()).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
         List<Qa> qaList = qaService.findByInterviewInterviewIdAndDelFlagOrderByQaId(feedbackGenerateReq.getInterviewId());
-        return feedbackService.generateFeedback(feedbackGenerateReq, qaList);
+        return feedbackService.generateFeedback(feedbackGenerateReq, interview, qaList);
     }
 
     @Transactional
     public CommonResponse insertAnswer(QaAnswerInsertReq qaAnswerInsertReq) throws IOException {
-       return qaService.insertAnswer(qaAnswerInsertReq);
+        Interview interview = findByUserUserIdAndInterviewIdAndDelFlag(qaAnswerInsertReq.getUserId(), qaAnswerInsertReq.getInterviewId()).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
+       return qaService.insertAnswer(qaAnswerInsertReq, interview);
     }
 
     @Transactional
@@ -281,23 +295,30 @@ public class InterviewService {
         Long userId = interviewDeleteReq.getUserId();
         Long interviewId = interviewDeleteReq.getInterviewId();
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Interview interview = interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
+        Interview interview = findByUserUserIdAndInterviewIdAndDelFlag(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
 
         // 피드백 삭제
-        qaService.selectQaList(interviewId).stream().forEach(qaListRes -> {
+/*        qaService.selectQaList(interviewId).stream().forEach(qaListRes -> {
             feedbackService.deleteFeedback(qaListRes.getQaId());
-        });
+        });*/
 
         // 질문 삭제
-        qaService.deleteQa(interviewId);
+        //qaService.deleteQa(interviewId);
 
         // 면접 삭제
-        interviewRepository.delete(interview);
+        //interviewRepository.delete(interview);
+        
+        // 면접 삭제 상태 값 변경으로 수정
+        InterviewEditor.InterviewEditorBuilder editorBuilder = interview.toEditor();
+        InterviewEditor interviewEditor = editorBuilder.delFlag(CommonCode.DELETE_Y.getCode()).delDate(new Date()).build();
+        interview.edit(interviewEditor);
+
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
     public CommonResponse generateQa(QaGenerateReq qaGenerateReq) throws IOException {
-        qaService.generateQa(qaGenerateReq);
+        Interview interview = findByUserUserIdAndInterviewIdAndDelFlag(qaGenerateReq.getUserId(), qaGenerateReq.getInterviewId()).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
+        qaService.generateQa(qaGenerateReq, interview);
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 }

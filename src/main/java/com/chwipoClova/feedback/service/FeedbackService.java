@@ -84,12 +84,10 @@ public class FeedbackService {
     }
 
     @Transactional
-    public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq, List<Qa> qaList) throws IOException {
-        Long interviewId = feedbackGenerateReq.getInterviewId();
+    public CommonResponse generateFeedback(FeedbackGenerateReq feedbackGenerateReq, Interview interview, List<Qa> qaList) throws IOException {
         Long userId = feedbackGenerateReq.getUserId();
 
         userRepository.findById(userId).orElseThrow(() -> new CommonException(ExceptionCode.USER_NULL.getMessage(), ExceptionCode.USER_NULL.getCode()));
-        Interview interview = interviewRepository.findByUserUserIdAndInterviewId(userId, interviewId).orElseThrow(() -> new CommonException(ExceptionCode.INTERVIEW_NULL.getMessage(), ExceptionCode.INTERVIEW_NULL.getCode()));
         Integer status = interview.getStatus();
 
         if (status != 1) {

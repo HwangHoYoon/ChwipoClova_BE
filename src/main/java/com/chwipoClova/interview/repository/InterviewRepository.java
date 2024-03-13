@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
-    Optional<Interview> findByUserUserIdAndInterviewId(Long userId, Long interviewId);
+    Optional<Interview> findByUserUserIdAndInterviewIdAndDelFlag(Long userId, Long interviewId, Integer delFlag);
 
-    List<Interview> findByUserUserIdOrderByRegDate(Long userId);
+    List<Interview> findByUserUserIdAndDelFlagOrderByRegDate(Long userId, Integer delFlag);
 }

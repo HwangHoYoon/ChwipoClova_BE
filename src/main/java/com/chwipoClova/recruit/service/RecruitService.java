@@ -265,7 +265,7 @@ public class RecruitService {
                 // recruitRepository.deleteAll(recruitList);
                 recruitList.stream().forEach(recruit -> {
                     RecruitEditor.RecruitEditorBuilder editorBuilder = recruit.toEditor();
-                    RecruitEditor recruitEditor = editorBuilder.delFlag(1)
+                    RecruitEditor recruitEditor = editorBuilder.delFlag(CommonCode.DELETE_Y.getCode())
                             .build();
                     recruit.edit(recruitEditor);
                 });
