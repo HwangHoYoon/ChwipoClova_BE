@@ -57,7 +57,7 @@ public class ArticleController {
             @Schema(name = "categoryIdList", type = "array")
             @RequestParam(name = "categoryIdList", required = false) List<Long> categoryIdList,
             @Schema(description = "startNumber", example = "0", name = "startNumber") @RequestParam(name = "startNumber", required = false) Integer startNumber,
-            @Schema(description = "endNumber", example = "10", name = "endNumber") @RequestParam(name = "endNumber", required = false) Integer endNumber
+            @Schema(description = "offSetNumber", example = "10", name = "offSetNumber") @RequestParam(name = "offSetNumber", required = false) Integer endNumber
     ) {
         return articleService.selectArticleList(categoryIdList, startNumber, endNumber);
     }
