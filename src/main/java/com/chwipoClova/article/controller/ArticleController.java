@@ -42,8 +42,8 @@ public class ArticleController {
             @ApiResponse(responseCode = "200", description = "OK")
     }
     )
-    public List<FeedCategoryRes> getSubCategoryList(@Schema(description = "categoryId", example = "1", name = "categoryId") @RequestParam(name = "categoryId") Long categoryId) {
-        return articleService.selectSubCategoryList(categoryId);
+    public List<FeedCategoryRes> getSubCategoryList(@Schema(description = "categoryId", example = "1", name = "categoryId") @RequestParam(name = "categoryId") String categoryCode) {
+        return articleService.selectSubCategoryList(categoryCode);
     }
 
 
@@ -55,10 +55,10 @@ public class ArticleController {
     )
     public List<ArticleListRes> getArticleList(
             @Schema(name = "categoryIdList", type = "array")
-            @RequestParam(name = "categoryIdList", required = false) List<Long> categoryIdList,
+            @RequestParam(name = "categoryIdList", required = false) List<String> categoryCodeList,
             @Schema(description = "startNumber", example = "0", name = "startNumber") @RequestParam(name = "startNumber", required = false) Integer startNumber,
             @Schema(description = "offSetNumber", example = "10", name = "offSetNumber") @RequestParam(name = "offSetNumber", required = false) Integer endNumber
     ) {
-        return articleService.selectArticleList(categoryIdList, startNumber, endNumber);
+        return articleService.selectArticleList(categoryCodeList, startNumber, endNumber);
     }
 }

@@ -8,8 +8,8 @@ import lombok.Data;
 @Builder
 public class FeedCategoryRes {
 
-    @Schema(description = "CategoryID", example = "1", name = "categoryId")
-    private Long categoryId;
+    @Schema(description = "CategoryID", example = "CD1", name = "categoryId")
+    private String categoryId;
 
     @Schema(description = "categoryName", example = "개발", name = "categoryName")
     private String categoryName;

@@ -4,12 +4,11 @@ import com.chwipoClova.article.entity.Feed;
 import com.chwipoClova.article.entity.FeedAndCategory;
 import com.chwipoClova.article.entity.FeedMainCategory;
 import com.chwipoClova.article.entity.FeedSubCategory;
-import com.chwipoClova.article.repository.FeedAndCategoryRepository;
-import com.chwipoClova.article.repository.FeedMainCategoryRepository;
-import com.chwipoClova.article.repository.FeedRepository;
-import com.chwipoClova.article.repository.FeedSubCategoryRepository;
+import com.chwipoClova.article.repository.*;
 import com.chwipoClova.article.response.ArticleListRes;
 import com.chwipoClova.article.response.FeedCategoryRes;
+import com.chwipoClova.common.exception.CommonException;
+import com.chwipoClova.common.exception.ExceptionCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +31,7 @@ public class ArticleService {
     private final FeedSubCategoryRepository feedSubCategoryRepository;
     private final FeedAndCategoryRepository feedAndCategoryRepository;
     private final FeedRepository feedRepository;
+    private final FeedCustomRepository feedCustomRepository;
 
     public List<FeedCategoryRes> selectMainCategoryList() {
 
@@ -41,7 +41,7 @@ public class ArticleService {
 
         feedMainCategoryList.forEach(feedMainCategory -> {
             FeedCategoryRes feedCategoryRes = FeedCategoryRes.builder()
-                    .categoryId(feedMainCategory.getId())
+                    .categoryId(feedMainCategory.getCode())
                     .categoryName(feedMainCategory.getName())
                     .build();
             feedCategoryResList.add(feedCategoryRes);
@@ -50,14 +50,17 @@ public class ArticleService {
         return feedCategoryResList;
     }
 
-    public List<FeedCategoryRes> selectSubCategoryList(Long categoryId) {
-        List<FeedSubCategory> feedSubCategoryList =  feedSubCategoryRepository.findByMainId(categoryId);
+    public List<FeedCategoryRes> selectSubCategoryList(String categoryCode) {
 
+        FeedMainCategory mainCategory = feedMainCategoryRepository.findByCode(categoryCode).orElseThrow(() -> new CommonException(ExceptionCode.CATEGORY_NULL.getMessage(), ExceptionCode.CATEGORY_NULL.getCode()));
+        Long categoryId = mainCategory.getId();
+
+        List<FeedSubCategory> feedSubCategoryList =  feedSubCategoryRepository.findByMain_IdOrderByCodeAsc(categoryId);
         List<FeedCategoryRes> feedCategoryResList = new ArrayList<>();
 
         feedSubCategoryList.forEach(feedMainCategory -> {
             FeedCategoryRes feedCategoryRes = FeedCategoryRes.builder()
-                    .categoryId(feedMainCategory.getId())
+                    .categoryId(feedMainCategory.getCode())
                     .categoryName(feedMainCategory.getName())
                     .build();
             feedCategoryResList.add(feedCategoryRes);
@@ -65,34 +68,29 @@ public class ArticleService {
     return feedCategoryResList;
 }
 
-    public List<ArticleListRes> selectArticleList(List<Long> categoryIdList, Integer startNumber, Integer endNumber) {
-
-        List<Feed> feedList = null;
+    public List<ArticleListRes> selectArticleList(List<String> categoryCodeList, Integer startNumber, Integer endNumber) {
 
         List<ArticleListRes> articleListResList = new ArrayList<>();
+        List<Long> feedIdList = new ArrayList<>();
 
-        if (categoryIdList != null && !categoryIdList.isEmpty()) {
+        if (categoryCodeList != null && !categoryCodeList.isEmpty()) {
+            List<Long> categoryIdList = new ArrayList<>();
+            List<FeedSubCategory> subCategoryList = feedSubCategoryRepository.findByCodeIn(categoryCodeList);
+            if (subCategoryList == null || subCategoryList.isEmpty()) {
+                return new ArrayList<>();
+            }
+            subCategoryList.forEach(feedSubCategory -> categoryIdList.add(feedSubCategory.getId()));
             List<FeedAndCategory> feedAndCategoryList = feedAndCategoryRepository.findByCategory_IdIn(categoryIdList);
-
-            List<Long> feedIdList = new ArrayList<>();
-
+            if (feedAndCategoryList == null || feedAndCategoryList.isEmpty()) {
+                return new ArrayList<>();
+            }
             feedAndCategoryList.forEach(feedAndCategory -> {
                 Long feedId = feedAndCategory.getFeed().getId();
                 feedIdList.add(feedId);
             });
-
-            if (startNumber != null && endNumber != null) {
-                feedList = feedRepository.findFeedByIdsOrderByCreatedAtDescIdAsc(feedIdList, startNumber, endNumber);
-            } else {
-                feedList = feedRepository.findFeedByIdsOrderByCreatedAtDescIdAsc(feedIdList);
-            }
-        } else {
-            if (startNumber != null && endNumber != null) {
-                feedList = feedRepository.findFeedAllOrderByCreatedAtDescIdAsc(startNumber, endNumber);
-            } else {
-                feedList = feedRepository.findFeedAllOrderByCreatedAtDescIdAsc();
-            }
         }
+
+        List<Feed> feedList = feedCustomRepository.selectFeedList(feedIdList, startNumber, endNumber);
 
         feedList.forEach(feed -> {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");

@@ -69,8 +69,9 @@ public enum ExceptionCode {
 
     API_QA_NULL("986", "질문 API 결과가 비어있습니다."),
 
-    API_TOKEN_COUNT_OVER("987", "글자수를 5000자 이하로 줄여주세요.")
+    API_TOKEN_COUNT_OVER("987", "글자수를 5000자 이하로 줄여주세요."),
 
+    CATEGORY_NULL("701", "카테고리 정보가 올바르지 않습니다.")
     ;
 
     private static final ExceptionCode[] VALUES;
