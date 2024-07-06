@@ -11,9 +11,6 @@ import com.chwipoClova.common.exception.CommonException;
 import com.chwipoClova.common.exception.ExceptionCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -51,11 +48,15 @@ public class ArticleService {
     }
 
     public List<FeedCategoryRes> selectSubCategoryList(String categoryCode) {
+        List<FeedSubCategory> feedSubCategoryList;
+        if (categoryCode != null && !categoryCode.isEmpty()) {
+            FeedMainCategory mainCategory = feedMainCategoryRepository.findByCode(categoryCode).orElseThrow(() -> new CommonException(ExceptionCode.CATEGORY_NULL.getMessage(), ExceptionCode.CATEGORY_NULL.getCode()));
+            Long categoryId = mainCategory.getId();
+            feedSubCategoryList =  feedSubCategoryRepository.findByMain_IdOrderByCodeAsc(categoryId);
+        } else {
+            feedSubCategoryList = feedSubCategoryRepository.findAllByOrderByMain_IdAscCode();
+        }
 
-        FeedMainCategory mainCategory = feedMainCategoryRepository.findByCode(categoryCode).orElseThrow(() -> new CommonException(ExceptionCode.CATEGORY_NULL.getMessage(), ExceptionCode.CATEGORY_NULL.getCode()));
-        Long categoryId = mainCategory.getId();
-
-        List<FeedSubCategory> feedSubCategoryList =  feedSubCategoryRepository.findByMain_IdOrderByCodeAsc(categoryId);
         List<FeedCategoryRes> feedCategoryResList = new ArrayList<>();
 
         feedSubCategoryList.forEach(feedMainCategory -> {

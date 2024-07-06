@@ -42,7 +42,7 @@ public class ArticleController {
             @ApiResponse(responseCode = "200", description = "OK")
     }
     )
-    public List<FeedCategoryRes> getSubCategoryList(@Schema(description = "categoryId", example = "1", name = "categoryId") @RequestParam(name = "categoryId") String categoryCode) {
+    public List<FeedCategoryRes> getSubCategoryList(@Schema(description = "categoryId", example = "1", name = "categoryId") @RequestParam(name = "categoryId", required = false) String categoryCode) {
         return articleService.selectSubCategoryList(categoryCode);
     }
 

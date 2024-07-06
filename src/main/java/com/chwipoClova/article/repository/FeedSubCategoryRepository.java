@@ -9,4 +9,6 @@ import java.util.List;
 public interface FeedSubCategoryRepository extends JpaRepository<FeedSubCategory, Long> {
     List<FeedSubCategory> findByMain_IdOrderByCodeAsc(Long id);
     List<FeedSubCategory> findByCodeIn(Collection<String> codes);
+    List<FeedSubCategory> findAllByOrderByMain_IdAscCode();
+
 }
