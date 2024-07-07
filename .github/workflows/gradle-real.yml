@@ -20,7 +20,10 @@ jobs:
 
     steps:
       - name: Set Node.js 16 path
-        run: echo "/home/real-actions-runner/actions-runner/externals/node16/bin:\$PATH" >> $GITHUB_ENV
+        run: echo "/home/real-actions-runner/actions-runner/externals/node16/bin" >> $GITHUB_PATH
+
+      - name: Debug $GITHUB_PATH
+        run: echo "PATH = $PATH"
 
       - name: checkout
         uses: actions/checkout@v3
