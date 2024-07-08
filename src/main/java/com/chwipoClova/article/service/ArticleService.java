@@ -74,12 +74,33 @@ public class ArticleService {
         List<ArticleListRes> articleListResList = new ArrayList<>();
         List<Long> feedIdList = new ArrayList<>();
 
+        List<FeedSubCategory> mainSubCategoryList = new ArrayList<>();
         if (categoryCodeList != null && !categoryCodeList.isEmpty()) {
+            // 대분류 카테고리 있는지 확인하여 소분류 카테고리 조회
+            List<FeedMainCategory> mainCategoryList = feedMainCategoryRepository.findByCodeIn(categoryCodeList);
+            if (mainCategoryList != null && !mainCategoryList.isEmpty()) {
+                List<Long> mainCategoryIdList = new ArrayList<>();
+                mainCategoryList.forEach(feedMainCategory -> {
+                    Long categoryId = feedMainCategory.getId();
+                    mainCategoryIdList.add(categoryId);
+                });
+                if (!mainCategoryIdList.isEmpty()) {
+                    mainSubCategoryList = feedSubCategoryRepository.findByMain_IdIn(mainCategoryIdList);
+                }
+            }
+
+            // 소분류 카테고리 조회
             List<Long> categoryIdList = new ArrayList<>();
             List<FeedSubCategory> subCategoryList = feedSubCategoryRepository.findByCodeIn(categoryCodeList);
+
+            if (!mainSubCategoryList.isEmpty()) {
+                subCategoryList.addAll(mainSubCategoryList);
+            }
+
             if (subCategoryList == null || subCategoryList.isEmpty()) {
                 return new ArrayList<>();
             }
+
             subCategoryList.forEach(feedSubCategory -> categoryIdList.add(feedSubCategory.getId()));
             List<FeedAndCategory> feedAndCategoryList = feedAndCategoryRepository.findByCategory_IdIn(categoryIdList);
             if (feedAndCategoryList == null || feedAndCategoryList.isEmpty()) {

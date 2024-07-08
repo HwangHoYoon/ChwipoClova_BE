@@ -10,5 +10,5 @@ public interface FeedSubCategoryRepository extends JpaRepository<FeedSubCategory
     List<FeedSubCategory> findByMain_IdOrderByCodeAsc(Long id);
     List<FeedSubCategory> findByCodeIn(Collection<String> codes);
     List<FeedSubCategory> findAllByOrderByMain_IdAscCode();
-
+    List<FeedSubCategory> findByMain_IdIn(Collection<Long> ids);
 }
