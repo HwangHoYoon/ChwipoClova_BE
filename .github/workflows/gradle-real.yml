@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: apiserver1
 
     steps:
       - name: checkout
