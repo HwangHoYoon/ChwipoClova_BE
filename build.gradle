@@ -88,6 +88,8 @@ dependencies {
 	// redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+	implementation 'org.springframework.boot:spring-boot-starter-mail:3.3.1'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.3.1'
 }
 
 

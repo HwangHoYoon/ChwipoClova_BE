@@ -71,7 +71,9 @@ public enum ExceptionCode {
 
     API_TOKEN_COUNT_OVER("987", "글자수를 5000자 이하로 줄여주세요."),
 
-    CATEGORY_NULL("701", "카테고리 정보가 올바르지 않습니다.")
+    CATEGORY_NULL("701", "카테고리 정보가 올바르지 않습니다."),
+
+    SUBSCRIPTION_NULL("601", "구독정보가 올바르지 않습니다.")
     ;
 
     private static final ExceptionCode[] VALUES;
