@@ -8,14 +8,21 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -51,7 +58,7 @@ public class EmailService {
         }
     }
 
-    public void sendLoginLink(String email, List<Feed> feedList) {
+    public void sendLoginLink(String email, List<Feed> feedList) throws IOException {
         Context context = getContext(feedList);
         String message = htmlTemplateEngine.process(EXAMPLE_LINK_TEMPLATE, context);
 
@@ -67,7 +74,7 @@ public class EmailService {
         send(emailMessage);
     }
 
-    private Context getContext(List<Feed> feedList) {
+    private Context getContext(List<Feed> feedList) throws IOException {
         Context context = new Context();
         // 상위 10개만 뽑음
         List<Feed> feeds = new ArrayList<>();
@@ -80,7 +87,17 @@ public class EmailService {
         }
         context.setVariable("items", feeds);
         context.setVariable("count", "총 " + feedList.size() + "개");
-        context.setVariable("image", domain + "mail/tiki.png");
+
+        String base64Image = encodeImageToBase64("static/mail/tiki.png");
+        context.setVariable("base64Image", base64Image);
+
+        //context.setVariable("image", domain + "mail/tiki.png");
         return context;
+    }
+
+    public String encodeImageToBase64(String imagePath) throws IOException {
+        Resource resource = new ClassPathResource(imagePath);
+        byte[] imageBytes = Files.readAllBytes(Paths.get(resource.getURI()));
+        return Base64.getEncoder().encodeToString(imageBytes);
     }
 }

@@ -63,7 +63,7 @@ public class SubscriptionController {
             @ApiResponse(responseCode = "200", description = "OK")
     }
     )
-    public CommonResponse emailTest(String email) {
+    public CommonResponse emailTest(String email) throws IOException {
         return subscriptionService.test(email);
     }
 }

@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -61,7 +62,7 @@ public class SubscriptionService {
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
-    public CommonResponse test(String email) {
+    public CommonResponse test(String email) throws IOException {
         LocalDate localDate = LocalDate.now();
         // 지난주 목요일
         Instant lastThurDay = DateUtils.getLocalDateToInstant(DateUtils.calculateLastWeek(localDate, DayOfWeek.THURSDAY));
