@@ -76,8 +76,7 @@ public class SubscriptionService {
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
-    public CommonResponse subscriptionCheck(SubscriptionReq subscriptionReq) {
-        Long userId = subscriptionReq.getUserId();
+    public CommonResponse subscriptionCheck(Long userId) {
         SubscriptionRes subscriptionRes = new SubscriptionRes();
         Optional<Subscription> subscription = subscriptionRepository.findByUser_UserId(userId);
 

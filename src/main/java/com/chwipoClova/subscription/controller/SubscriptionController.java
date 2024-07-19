@@ -53,8 +53,8 @@ public class SubscriptionController {
             @ApiResponse(responseCode = "200", description = "OK")
     }
     )
-    public CommonResponse subscriptionCheck(SubscriptionReq subscriptionReq) throws Exception {
-        return subscriptionService.subscriptionCheck(subscriptionReq);
+    public CommonResponse subscriptionCheck(Long userId) {
+        return subscriptionService.subscriptionCheck(userId);
     }
 
     @Operation(summary = "이메일 발송 테스트", description = "이메일 발송 테스트")
