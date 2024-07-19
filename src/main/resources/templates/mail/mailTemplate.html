@@ -1,12 +1,97 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-    <title>아티클</title>
+    <meta charset="UTF-8" content="text/html" http-equiv="Content-Type">
+    <title>Title</title>
 </head>
 <body>
-<h1>아티클 목록</h1>
-<ul>
-    <li th:each="item : ${items}" th:text="${item.getTitle()}"></li>
-</ul>
+<table style="width:100%">
+    <tbody>
+    <tr>
+        <td style="text-align:center">
+            <div style="width:100%; max-width: 630px; background:#ffffff; margin:0px auto">
+                <table
+                       style="width:100%;background:#000000;border:0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                    <tr>
+                        <td style="text-align:justify;font-size:0;box-sizing:border-box;padding:0px"><img
+                                th:src="${image}"
+                                alt=""
+                                style="display:inline;vertical-align:bottom;text-align:justify;max-width:100%!important;height:auto;border:0"
+                                width="100%" data-bit="iit"
+                                tabindex="0">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <table style="width:100%;background:#f2f2f2;border:0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                    <tr>
+                        <td style="width: 80%; text-align:left;font-weight:bold;margin:0;line-height:1.7;font-size:26px;font-family:noto sans kr,noto sans cjk kr,noto sans cjk,Malgun Gothic,apple sd gothic neo,nanum gothic,malgun gothic,dotum,arial,helvetica,Meiryo,MS Gothic,sans-serif!important;color:#000000;padding:5px 5px 0 15px">
+                            <div style="margin: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;word-break:break-word;">
+                                📌 커리어 뉴스
+                            </div>
+                        </td>
+                        <td style="text-align: right; width: 20%; font-weight:bold; margin:0;line-height:1.7;font-size:26px;font-family:noto sans kr,noto sans cjk kr,noto sans cjk,Malgun Gothic,apple sd gothic neo,nanum gothic,malgun gothic,dotum,arial,helvetica,Meiryo,MS Gothic,sans-serif!important;color:#000000;padding:5px 5px 0 15px">
+                            <div style="margin: 0; padding: 0 10px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;word-break:break-word;">
+                                <span th:text="${count}" ></span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <table width="100%" cellpadding="0" cellspacing="0" style="border:0;background:#f2f2f2">
+                    <tbody>
+                    <tr>
+                        <td style="height:0" colspan="3"></td>
+                    </tr>
+                    <tr>
+                        <td style="width:0"></td>
+                        <td style="height:15px;background:none;padding:0;border-top-width:1px;border-top-style:solid;border-top-color:#000000;margin:0 0"></td>
+                        <td style="width:0"></td>
+                    </tr>
+                    </tbody>
+                </table>
+                <table role="presentation"
+                       style="width:100%;background:#f2f2f2;border:0;table-layout: fixed;" cellpadding="0" cellspacing="0">
+                    <tbody>
+                    <tr th:each="item : ${items}">
+                        <td style="width: 80%; text-align:left;margin:0;line-height:1.7;font-size:16px;font-family:noto sans kr,noto sans cjk kr,noto sans cjk,Malgun Gothic,apple sd gothic neo,nanum gothic,malgun gothic,dotum,arial,helvetica,Meiryo,MS Gothic,sans-serif!important;color:#000000;padding:5px 5px 0 15px">
+                            <div style="margin: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;word-break:break-word;">
+                                <span th:text="${item.getTitle()}" ></span>
+                            </div>
+                        </td>
+                        <td style="text-align: right; width: 20%; margin:0;line-height:1.7;font-size:16px;font-family:noto sans kr,noto sans cjk kr,noto sans cjk,Malgun Gothic,apple sd gothic neo,nanum gothic,malgun gothic,dotum,arial,helvetica,Meiryo,MS Gothic,sans-serif!important;color:#000000;padding:5px 5px 0 15px">
+                            <div style="margin: 0; padding: 0 10px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;word-break:break-word;">
+                                <a th:href="@{${item.getLink()}}" th:text="'자세히보기'" style="text-decoration: none;" ></a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <table role="presentation" style="width:100%;background:#f2f2f2;border:0;table-layout: fixed; padding-top: 10px; padding-bottom: 10px;" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="text-align: center;">
+                            <table border="0" cellpadding="0" cellspacing="0"
+                                   style="color:#000000;background:#f2f2f2;border-radius:3px;box-sizing:border-box;text-decoration:none;outline:0;font-family:noto sans kr,noto sans cjk kr,noto sans cjk,Malgun Gothic,apple sd gothic neo,nanum gothic,malgun gothic,dotum,arial,helvetica,Meiryo,MS Gothic,sans-serif;text-align:center;margin: 0 auto;">
+                                <tbody>
+                                <tr>
+                                    <td style="font-size:0;background:#000000;border-radius:10px;padding:19px 20px;text-align:center"
+                                        valign="top"><a
+                                            href="https://www.tikitaka.chat/article"
+                                            style="font-size:16px;color:#FFFFFF;text-decoration:none;outline:0;font-family:noto sans kr,noto sans cjk kr,noto sans cjk,Malgun Gothic,apple sd gothic neo,nanum gothic,malgun gothic,dotum,arial,helvetica,Meiryo,MS Gothic,sans-serif;text-align:center;line-height:1;box-sizing:border-box;width:100%"
+                                            target="_blank"
+                                            data-saferedirecturl="https://www.tikitaka.chat/article"><b>더보기</b></a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>
 </body>
 </html>

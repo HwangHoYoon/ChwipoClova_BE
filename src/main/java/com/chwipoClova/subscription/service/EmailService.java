@@ -1,19 +1,21 @@
 package com.chwipoClova.subscription.service;
 
 import com.chwipoClova.article.entity.Feed;
+import com.chwipoClova.common.utils.DateUtils;
 import com.chwipoClova.subscription.request.EmailMessage;
-import com.chwipoClova.user.entity.User;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -23,6 +25,9 @@ public class EmailService {
     private final JavaMailSender javaMailSender;
     private final TemplateEngine htmlTemplateEngine;
     private static final String EXAMPLE_LINK_TEMPLATE = "mail/mailTemplate";
+
+    @Value("${domain}")
+    private String domain;
 
     public void send(EmailMessage emailMessage) {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
@@ -49,9 +54,14 @@ public class EmailService {
     public void sendLoginLink(String email, List<Feed> feedList) {
         Context context = getContext(feedList);
         String message = htmlTemplateEngine.process(EXAMPLE_LINK_TEMPLATE, context);
+
+        LocalDate localDate = LocalDate.now();
+
+        int weekOfMonth = DateUtils.getWeekOfMonth(localDate);
+
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(email)
-                .subject("이메일 테스트")
+                .subject("[티키타카] " + localDate.getMonth().getValue() + "월 " + weekOfMonth + "주차 커리어 뉴스")
                 .message(message)
                 .build();
         send(emailMessage);
@@ -59,7 +69,18 @@ public class EmailService {
 
     private Context getContext(List<Feed> feedList) {
         Context context = new Context();
-        context.setVariable("items", feedList);
+        // 상위 10개만 뽑음
+        List<Feed> feeds = new ArrayList<>();
+        if (feedList.size() > 10) {
+            for (int i = 0; i < 10; i++) {
+                feeds.add(feedList.get(i));
+            }
+        } else {
+            feeds = feedList;
+        }
+        context.setVariable("items", feeds);
+        context.setVariable("count", "총 " + feedList.size() + "개");
+        context.setVariable("image", domain + "/mail/tiki.png");
         return context;
     }
 }

@@ -54,22 +54,36 @@ public class RequestFilter implements Filter {
 
         long start = System.currentTimeMillis();
         long end = System.currentTimeMillis();
+        String responseBody = getResponseBody(responseWrapper);
 
         if (customRequestWrapper.getRequestURI().indexOf("/api-docs/") == -1 && customRequestWrapper.getRequestURI().indexOf("/swagger-ui/") == -1) {
-            log.info("\n" +
-                            "[REQUEST] {} - {} {} - {}\n" +
-                            "Headers : {}\n" +
-                            "Request : {}\n" +
-                            //"Headers : {}\n" +
-                            "Response : {}\n",
-                    ((HttpServletRequest) customRequestWrapper).getMethod(),
-                    ((HttpServletRequest) customRequestWrapper).getRequestURI(),
-                    responseWrapper.getStatus(),
-                    (end - start) / 1000.0,
-                    getHeaders(customRequestWrapper),
-                    buildAccessLog(customRequestWrapper),
-                    //getHeaders(responseWrapper),
-                    getResponseBody(responseWrapper));
+            if (!customRequestWrapper.getRequestURI().contains("/mail/tiki.png/")) {
+                log.info("\n" +
+                                "[REQUEST] {} - {} {} - {}\n" +
+                                "Headers : {}\n" +
+                                "Request : {}\n",
+                        ((HttpServletRequest) customRequestWrapper).getMethod(),
+                        ((HttpServletRequest) customRequestWrapper).getRequestURI(),
+                        responseWrapper.getStatus(),
+                        (end - start) / 1000.0,
+                        getHeaders(customRequestWrapper),
+                        buildAccessLog(customRequestWrapper));
+            } else {
+                log.info("\n" +
+                                "[REQUEST] {} - {} {} - {}\n" +
+                                "Headers : {}\n" +
+                                "Request : {}\n" +
+                                //"Headers : {}\n" +
+                                "Response : {}\n",
+                        ((HttpServletRequest) customRequestWrapper).getMethod(),
+                        ((HttpServletRequest) customRequestWrapper).getRequestURI(),
+                        responseWrapper.getStatus(),
+                        (end - start) / 1000.0,
+                        getHeaders(customRequestWrapper),
+                        buildAccessLog(customRequestWrapper),
+                        //getHeaders(responseWrapper),
+                        responseBody);
+            }
         } else {
             log.info("[REQUEST] {} - {} {} - {}", ((HttpServletRequest) customRequestWrapper).getMethod(), ((HttpServletRequest) customRequestWrapper).getRequestURI(), responseWrapper.getStatus(), (end - start) / 1000.0);
             getResponseBody(responseWrapper);

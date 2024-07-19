@@ -7,9 +7,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 
 @Slf4j
 @RestController
@@ -38,6 +45,16 @@ public class SubscriptionController {
     )
     public CommonResponse subscriptionCancel(@RequestBody SubscriptionReq subscriptionReq) throws Exception {
         return subscriptionService.subscriptionCancel(subscriptionReq);
+    }
+
+    @Operation(summary = "구독확인", description = "구독확인")
+    @GetMapping(path = "/subscriptionCheck")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK")
+    }
+    )
+    public CommonResponse subscriptionCheck(SubscriptionReq subscriptionReq) throws Exception {
+        return subscriptionService.subscriptionCheck(subscriptionReq);
     }
 
     @Operation(summary = "이메일 발송 테스트", description = "이메일 발송 테스트")
