@@ -80,7 +80,7 @@ public class EmailService {
         }
         context.setVariable("items", feeds);
         context.setVariable("count", "총 " + feedList.size() + "개");
-        context.setVariable("image", domain + "/mail/tiki.png");
+        context.setVariable("image", domain + "mail/tiki.png");
         return context;
     }
 }
