@@ -62,7 +62,9 @@ public class SubscriptionService {
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
 
-    public CommonResponse test(String email) throws IOException {
+    public CommonResponse sendSubscriptionEmail() throws IOException {
+        List<Subscription> subscriptionList = subscriptionRepository.findAll();
+
         LocalDate localDate = LocalDate.now();
         // 지난주 목요일
         Instant lastThurDay = DateUtils.getLocalDateToInstant(DateUtils.calculateLastWeek(localDate, DayOfWeek.THURSDAY));
@@ -73,9 +75,12 @@ public class SubscriptionService {
         // 지난주 목요일 이번주 수요일
         List<Feed> feedList = feedRepository.findByCreatedAtBetweenOrderByCreatedAtDesc(lastThurDay, thisWednesDay);
 
-        emailService.sendLoginLink(email, feedList);
+        emailService.sendEmail(subscriptionList, feedList);
         return new CommonResponse<>(MessageCode.OK.getCode(), null, MessageCode.OK.getMessage());
     }
+
+
+
 
     public CommonResponse subscriptionCheck(Long userId) {
         SubscriptionRes subscriptionRes = new SubscriptionRes();

@@ -10,13 +10,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.Duration;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Slf4j
 @RestController
@@ -55,15 +59,5 @@ public class SubscriptionController {
     )
     public CommonResponse subscriptionCheck(Long userId) {
         return subscriptionService.subscriptionCheck(userId);
-    }
-
-    @Operation(summary = "이메일 발송 테스트", description = "이메일 발송 테스트")
-    @GetMapping(path = "/emailTest")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK")
-    }
-    )
-    public CommonResponse emailTest(String email) throws IOException {
-        return subscriptionService.test(email);
     }
 }

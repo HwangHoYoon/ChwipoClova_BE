@@ -2,6 +2,7 @@ package com.chwipoClova.subscription.service;
 
 import com.chwipoClova.article.entity.Feed;
 import com.chwipoClova.common.utils.DateUtils;
+import com.chwipoClova.subscription.entity.Subscription;
 import com.chwipoClova.subscription.request.EmailMessage;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -58,7 +59,7 @@ public class EmailService {
         }
     }
 
-    public void sendLoginLink(String email, List<Feed> feedList) throws IOException {
+    public void sendEmail(List<Subscription> subscriptionList, List<Feed> feedList) throws IOException {
         Context context = getContext(feedList);
         String message = htmlTemplateEngine.process(EXAMPLE_LINK_TEMPLATE, context);
 
@@ -66,12 +67,14 @@ public class EmailService {
 
         int weekOfMonth = DateUtils.getWeekOfMonth(localDate);
 
-        EmailMessage emailMessage = EmailMessage.builder()
-                .to(email)
-                .subject("[티키타카] " + localDate.getMonth().getValue() + "월 " + weekOfMonth + "주차 커리어 뉴스")
-                .message(message)
-                .build();
-        send(emailMessage);
+        subscriptionList.forEach(subscription -> {
+            EmailMessage emailMessage = EmailMessage.builder()
+                    .to(subscription.getEmail())
+                    .subject("[티키타카] " + localDate.getMonth().getValue() + "월 " + weekOfMonth + "주차 커리어 뉴스")
+                    .message(message)
+                    .build();
+            send(emailMessage);
+        });
     }
 
     private Context getContext(List<Feed> feedList) throws IOException {
