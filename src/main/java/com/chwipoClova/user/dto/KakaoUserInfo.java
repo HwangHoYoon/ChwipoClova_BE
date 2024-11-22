@@ -1,15 +1,17 @@
 package com.chwipoClova.user.dto;
 
-import com.chwipoClova.user.enums.UserLoginType;
+import com.chwipoClova.oauth2.dto.UserInfo;
+import com.chwipoClova.oauth2.enums.UserLoginType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 import java.util.Date;
+import java.util.Map;
 
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class KakaoUserInfo {
+public class KakaoUserInfo implements UserInfo {
 
     @JsonProperty("id")
     private Long id;
@@ -41,14 +43,34 @@ public class KakaoUserInfo {
         private boolean is_default_image;
     }
 
+    public String getId() {
+        return String.valueOf(id);
+    }
+
     public String getEmail() {
         return kakaoAccount.email;
+    }
+
+    @Override
+    public String getName() {
+        return kakaoAccount.profile.nickname;
+    }
+
+    @Override
+    public String getFirstName() {
+        return kakaoAccount.profile.nickname;
+    }
+
+    @Override
+    public String getLastName() {
+        return kakaoAccount.profile.nickname;
     }
 
     public String getNickname() {
         return kakaoAccount.profile.nickname;
     }
 
+    @Override
     public String getThumbnailImageUrl() {
         return kakaoAccount.profile.thumbnail_image_url;
     }
@@ -63,5 +85,15 @@ public class KakaoUserInfo {
 
     public UserLoginType getOAuthProvider() {
         return UserLoginType.KAKAO;
+    }
+
+    @Override
+    public String getAccessToken() {
+        return "";
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return Map.of();
     }
 }

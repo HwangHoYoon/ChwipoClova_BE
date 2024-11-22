@@ -7,6 +7,7 @@ import com.chwipoClova.common.response.CommonResponse;
 import com.chwipoClova.common.response.MessageCode;
 import com.chwipoClova.common.service.LogService;
 import com.chwipoClova.common.utils.JwtUtil;
+import com.chwipoClova.oauth2.dto.UserInfo;
 import com.chwipoClova.token.dto.TokenDto;
 import com.chwipoClova.token.entity.Token;
 import com.chwipoClova.token.service.TokenService;
@@ -87,13 +88,16 @@ public class UserService {
     public CommonResponse kakaoLogin(String code, HttpServletResponse response) {
         KakaoToken kakaoToken = requestAccessToken(code);
         KakaoUserInfo kakaoUserInfo = requestOauthInfo(kakaoToken);
+        return login(kakaoUserInfo, response);
+    }
 
-        long snsId = kakaoUserInfo.getId();
-        String email = kakaoUserInfo.getEmail();
-        String nickname = kakaoUserInfo.getNickname();
-        Integer snsType = kakaoUserInfo.getOAuthProvider().getCode();
-        String thumbnailImageUrl = kakaoUserInfo.getThumbnailImageUrl();
-        String profileImageUrl = kakaoUserInfo.getProfileImageUrl();
+    public CommonResponse login(UserInfo oauthUserInfo, HttpServletResponse response) {
+        String snsId = oauthUserInfo.getId();
+        String email = oauthUserInfo.getEmail();
+        String nickname = oauthUserInfo.getNickname();
+        Integer snsType = oauthUserInfo.getOAuthProvider().getCode();
+        String thumbnailImageUrl = oauthUserInfo.getThumbnailImageUrl();
+        String profileImageUrl = oauthUserInfo.getProfileImageUrl();
 
         Optional<User> userInfo = userRepository.findBySnsTypeAndSnsId(snsType, snsId);
 
@@ -111,7 +115,7 @@ public class UserService {
 //            tokenService.save(newToken);
 
             // Refresh 토큰 있는지 확인
-           // Token refreshToken = tokenService.findById(strUserId);
+            // Token refreshToken = tokenService.findById(strUserId);
 
             // 있다면 새토큰 발급후 업데이트
             // 없다면 새로 만들고 디비 저장
@@ -156,8 +160,76 @@ public class UserService {
             logService.newUserLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
             return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
         }
-
     }
+
+    public CommonResponse loginGoogle(UserInfo oauthUserInfo, HttpServletResponse response) {
+        String snsId = oauthUserInfo.getId();
+        String email = oauthUserInfo.getEmail();
+        String nickname = oauthUserInfo.getNickname();
+        Integer snsType = oauthUserInfo.getOAuthProvider().getCode();
+        String thumbnailImageUrl = oauthUserInfo.getThumbnailImageUrl();
+        String profileImageUrl = oauthUserInfo.getProfileImageUrl();
+
+        Optional<User> userInfo = userRepository.findBySnsTypeAndSnsId(snsType, snsId);
+
+        // 유저 정보가 있다면 업데이트 없으면 등록
+        if (userInfo.isPresent()) {
+            User userInfoRst = userInfo.get();
+
+            Long userId = userInfoRst.getUserId();
+
+            String strUserId = String.valueOf(userId);
+
+            // 로그인 할때마다 토큰 새로 발급(갱신)
+            TokenDto tokenDto = jwtUtil.createAllToken(strUserId);
+
+            // response 헤더에 Access Token / Refresh Token 넣음
+            jwtUtil.setResonseJwtToken(response, tokenDto);
+
+            UserLoginRes userLoginRes = UserLoginRes.builder()
+                    .snsId(userInfoRst.getSnsId())
+                    .userId(userId)
+                    .email(userInfoRst.getEmail())
+                    .name(userInfoRst.getName())
+                    .snsType(userInfoRst.getSnsType())
+                    .thumbnailImage(userInfoRst.getThumbnailImage())
+                    .profileImage(userInfoRst.getProfileImage())
+                    .regDate(userInfoRst.getRegDate())
+                    .modifyDate(userInfoRst.getModifyDate())
+                    .build();
+            log.info("기존유저 {}, {}",userLoginRes.getUserId(), userLoginRes.getName());
+            // API 로그 적재
+            logService.loginUserLogSave(userLoginRes.getUserId(), "기존유저 " + userLoginRes.getUserId() + "," + userLoginRes.getName());
+            return new CommonResponse<>(String.valueOf(HttpStatus.OK.value()), userLoginRes, HttpStatus.OK.getReasonPhrase());
+        } else {
+            User user = User.builder()
+                    .snsId(snsId)
+                    .email(email)
+                    .name(nickname)
+                    .snsType(snsType)
+                    .thumbnailImage(thumbnailImageUrl)
+                    .profileImage(profileImageUrl)
+                    .regDate(new Date())
+                    .build();
+            User userResult = userRepository.save(user);
+            log.info("신규유저 {}, {}",userResult.getUserId(), userResult.getName());
+
+            Long userId = userResult.getUserId();
+
+            String strUserId = String.valueOf(userId);
+
+            // 로그인 할때마다 토큰 새로 발급(갱신)
+            TokenDto tokenDto = jwtUtil.createAllToken(strUserId);
+
+            // response 헤더에 Access Token / Refresh Token 넣음
+            jwtUtil.setResonseJwtToken(response, tokenDto);
+
+            // API 로그 적재
+            logService.newUserLogSave(userResult.getUserId(), "신규유저 " + userResult.getUserId() + userResult.getName());
+            return new CommonResponse<>(MessageCode.NEW_USER.getCode(), null, MessageCode.NEW_USER.getMessage());
+        }
+    }
+
 
     public KakaoToken requestAccessToken(String code) {
 
@@ -264,7 +336,7 @@ public class UserService {
         KakaoToken kakaoToken = requestDevAccessToken(code);
         KakaoUserInfo kakaoUserInfo = requestOauthInfo(kakaoToken);
 
-        long snsId = kakaoUserInfo.getId();
+        String snsId = kakaoUserInfo.getId();
         String email = kakaoUserInfo.getEmail();
         String nickname = kakaoUserInfo.getNickname();
         Integer snsType = kakaoUserInfo.getOAuthProvider().getCode();

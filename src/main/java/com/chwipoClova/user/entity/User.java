@@ -50,7 +50,7 @@ public class User {
 
     @Column(name = "snsId")
     @Schema(description = "소셜회원 ID")
-    private Long snsId;
+    private String snsId;
 
     @Column(name = "thumbnailImage")
     @Schema(description = "프로필 미리보기 이미지")

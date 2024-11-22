@@ -92,6 +92,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.3.1'
 
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	implementation group: 'org.springframework.security', name: 'spring-security-oauth2-client', version: '6.2.0'
+
 }
 
 

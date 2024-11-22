@@ -1,14 +1,18 @@
-package com.chwipoClova.user.enums;
+package com.chwipoClova.oauth2.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Objects;
+
 @RequiredArgsConstructor
 @Getter
 public enum UserLoginType {
-    KAKAO(1, "카카오")
+    KAKAO("kakao",1, "카카오"),
+    GOOGLE("google", 2, "구글")
     ;
 
+    private final String registrationId;
     private final Integer code;
     private final String name;
 
@@ -20,7 +24,7 @@ public enum UserLoginType {
 
     public static String getLoginTypeName(Integer code) {
         for (UserLoginType status : VALUES) {
-            if (status.code == code) {
+            if (Objects.equals(status.code, code)) {
                 return status.getName();
             }
         }

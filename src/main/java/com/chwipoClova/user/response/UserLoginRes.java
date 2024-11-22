@@ -33,7 +33,7 @@ public class UserLoginRes {
     private Integer snsType;
 
     @Schema(description = "소셜회원 ID", example = "11314", name = "snsId")
-    private Long snsId;
+    private String snsId;
 
     @Schema(description = "프로필 미리보기 이미지", example = "http://k.kakaocdn.net/", name = "thumbnailImage")
     private String thumbnailImage;
