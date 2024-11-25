@@ -113,7 +113,16 @@ public class ArticleService {
         }
 
         List<Feed> feedList = feedCustomRepository.selectFeedList(feedIdList, startNumber, endNumber);
+        return getArticleList(feedList);
+    }
 
+    public List<ArticleListRes> selectAllArticleList(Integer startNumber, Integer endNumber) {
+        List<Feed> feedList = feedCustomRepository.selectAllFeedList(startNumber, endNumber);
+        return getArticleList(feedList);
+    }
+
+    private List<ArticleListRes> getArticleList(List<Feed> feedList) {
+        List<ArticleListRes> articleListResList = new ArrayList<>();
         feedList.forEach(feed -> {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
             ArticleListRes articleListRes = ArticleListRes.builder()
@@ -129,7 +138,6 @@ public class ArticleService {
                     .build();
             articleListResList.add(articleListRes);
         });
-
         return articleListResList;
     }
 }

@@ -32,6 +32,21 @@ public class FeedRepositoryImpl implements FeedCustomRepository {
         return query.orderBy(feed.createdAt.desc(), feed.id.asc()).fetch();
     }
 
+    @Override
+    public List<Feed> selectAllFeedList(Integer startNumber, Integer endNumber) {
+        var query = queryFactory.selectFrom(feed);
+
+        if (startNumber != null) {
+            query.offset(startNumber);
+        }
+
+        if (endNumber != null) {
+            query.limit(endNumber);
+        }
+
+        return query.orderBy(feed.createdAt.desc(), feed.id.asc()).fetch();
+    }
+
     private BooleanExpression idsEq(Collection<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return null;

@@ -61,4 +61,17 @@ public class ArticleController {
     ) {
         return articleService.selectArticleList(categoryCodeList, startNumber, endNumber);
     }
+
+    @Operation(summary = "전체 아티클 목록 조회", description = "전체 아티클 조회 목록 조회")
+    @GetMapping(path = "/getAllArticleList")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK")
+    }
+    )
+    public List<ArticleListRes> getAllArticleList(
+            @Schema(description = "startNumber", example = "0", name = "startNumber") @RequestParam(name = "startNumber", required = false) Integer startNumber,
+            @Schema(description = "offsetNumber", example = "10", name = "offsetNumber") @RequestParam(name = "offsetNumber", required = false) Integer endNumber
+    ) {
+        return articleService.selectAllArticleList(startNumber, endNumber);
+    }
 }

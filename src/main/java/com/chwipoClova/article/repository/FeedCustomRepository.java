@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface FeedCustomRepository {
     List<Feed> selectFeedList(Collection<Long> ids, Integer startNumber, Integer endNumber);
+
+    List<Feed> selectAllFeedList(Integer startNumber, Integer endNumber);
 }
