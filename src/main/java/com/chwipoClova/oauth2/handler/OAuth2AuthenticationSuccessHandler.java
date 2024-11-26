@@ -1,5 +1,7 @@
 package com.chwipoClova.oauth2.handler;
 
+import com.chwipoClova.common.response.CommonResponse;
+import com.chwipoClova.common.response.MessageCode;
 import com.chwipoClova.common.utils.JwtUtil;
 import com.chwipoClova.oauth2.dto.OAuth2UserInfoRecord;
 import com.chwipoClova.user.service.UserService;
@@ -7,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -41,8 +44,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             url = UriComponentsBuilder.fromUriString(homeUrl+error)
                     .build().toUriString();
         } else {
-            url = UriComponentsBuilder.fromUriString(homeUrl).build().toUriString();
-            userService.loginGoogle(userInfoRecord.userInfo(), response);
+            CommonResponse commonResponse = userService.loginGoogle(userInfoRecord.userInfo(), response);
+            String code = commonResponse.getCode();
+
+            if (StringUtils.equals(code, MessageCode.NEW_USER.getCode())) {
+                url = UriComponentsBuilder.fromUriString(homeUrl)
+                        .queryParam("signup", "true")
+                        .build().toUriString();
+            } else {
+                url = UriComponentsBuilder.fromUriString(homeUrl)
+                        .build().toUriString();
+            }
         }
         //clearAuthenticationAttributes(request, response);
         getRedirectStrategy().sendRedirect(request, response, url);

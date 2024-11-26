@@ -80,6 +80,6 @@ public class GoogleOAuth2UserInfo implements UserInfo {
 
     @Override
     public String getProfileImageUrl() {
-        return null;
+        return profileImageUrl;
     }
 }
