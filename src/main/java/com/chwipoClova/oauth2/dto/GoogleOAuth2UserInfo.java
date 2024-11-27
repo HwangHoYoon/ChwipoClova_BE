@@ -1,6 +1,7 @@
 package com.chwipoClova.oauth2.dto;
 
 import com.chwipoClova.oauth2.enums.UserLoginType;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 
@@ -70,7 +71,12 @@ public class GoogleOAuth2UserInfo implements UserInfo {
 
     @Override
     public String getNickname() {
-        return nickName;
+        String fullName = firstName + lastName;
+        if (StringUtils.isBlank(fullName)) {
+            return nickName;
+        } else {
+            return fullName;
+        }
     }
 
     @Override
