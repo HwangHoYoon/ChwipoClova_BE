@@ -61,17 +61,21 @@ public class GoogleOAuth2UserInfo implements UserInfo {
 
     @Override
     public String getFirstName() {
-        return firstName;
+        return isNullOrBlank(firstName) ? "" : firstName;
     }
 
     @Override
     public String getLastName() {
-        return lastName;
+        return  isNullOrBlank(lastName) ? "" : lastName;
+    }
+
+    public boolean isNullOrBlank(String str) {
+        return StringUtils.isBlank(str) || "null".equalsIgnoreCase(str);
     }
 
     @Override
     public String getNickname() {
-        String fullName = lastName + firstName;
+        String fullName = getLastName() + getFirstName();
         if (StringUtils.isBlank(fullName)) {
             return nickName;
         } else {
