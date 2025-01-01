@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: apiserver1
+    runs-on: newapiserver
 
     steps:
       - name: checkout
